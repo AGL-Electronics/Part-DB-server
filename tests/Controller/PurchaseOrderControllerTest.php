@@ -45,6 +45,7 @@ final class PurchaseOrderControllerTest extends WebTestCase
         $crawler = $client->followRedirect();
         self::assertResponseIsSuccessful();
         self::assertStringContainsString($name, (string) $client->getResponse()->getContent());
+        self::assertCount(1, $crawler->filter('a.btn-outline-light[href$="/orders"]'));
 
         $renamed = $name.'-renamed';
         $client->request('POST', '/en/orders/'.$orderId, [
@@ -255,6 +256,7 @@ final class PurchaseOrderControllerTest extends WebTestCase
 
         $crawler = $client->request('GET', '/en/orders/'.$orderId.'/check-in');
         self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('a.btn-outline-light[href$="/orders/'.$orderId.'"]'));
         self::assertSame((string) $lotId, $this->namedField($crawler, 'lot['.$lineId.']')?->attr('value'));
         self::assertStringContainsString($created['location']->getName(), (string) $client->getResponse()->getContent());
         self::assertCount(1, $crawler->filter('form[data-controller~="pages--purchase-order-check-in"]'));
