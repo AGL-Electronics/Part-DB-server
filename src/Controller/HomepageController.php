@@ -81,8 +81,15 @@ class HomepageController extends AbstractController
             }
         }
 
+        $buildVersion = getenv('PARTDB_BUILD_VERSION');
+        $buildLabel = is_string($buildVersion) ? trim($buildVersion) : '';
+        if (preg_match('/^\d+\.\d+\.\d+-[1-9]\d*$/', $buildLabel) !== 1) {
+            $buildLabel = '';
+        }
+
         return $this->render('homepage.html.twig', [
             'banner' => $this->bannerHelper->getBanner(),
+            'build_label' => $buildLabel !== '' ? $buildLabel : null,
             'git_branch' => $versionInfo->getBranchName(),
             'git_commit' => $versionInfo->getCommitHash(),
             'show_first_steps' => $show_first_steps,

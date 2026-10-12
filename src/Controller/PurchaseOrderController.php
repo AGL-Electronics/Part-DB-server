@@ -13,6 +13,7 @@ use App\Entity\Purchasing\PurchaseOrder;
 use App\Entity\Purchasing\PurchaseOrderLine;
 use App\Repository\StructuralDBElementRepository;
 use App\Services\Purchasing\OrderCheckIn;
+use App\Services\Purchasing\PurchaseOrderActivity;
 use App\Services\Purchasing\OrderCheckInException;
 use App\Services\Purchasing\OrderCheckInLine;
 use App\Services\Purchasing\PurchaseOrderList;
@@ -36,6 +37,7 @@ final class PurchaseOrderController extends AbstractController
         private readonly StockRefillCalculator $stockRefill,
         private readonly OrderCheckIn $orderCheckIn,
         private readonly PurchaseOrderList $orderList,
+        private readonly PurchaseOrderActivity $orderActivity,
         private readonly TranslatorInterface $translator,
     ) {
     }
@@ -70,6 +72,7 @@ final class PurchaseOrderController extends AbstractController
         }
         $this->entityManager->persist($order);
         $this->entityManager->flush();
+        $this->orderActivity->created($order);
         $this->addFlash('success', 'purchase_order.flash.created');
 
         return $this->redirectToRoute('purchase_order_show', ['id' => $order->getId()]);
@@ -95,17 +98,25 @@ final class PurchaseOrderController extends AbstractController
                 return $this->redirectToRoute('purchase_order_add_part', ['parts' => $request->request->get('parts')]);
             }
 
+            $creating = $this->intField($request, 'order') <= 0;
             $order = $this->orderFromRequest($request);
+            $addedLines = [];
             $added = 0;
             $skipped = 0;
             foreach ($parts as $part) {
-                if ($this->appendPart($order, $part)) {
+                $line = $this->appendPart($order, $part);
+                if ($line instanceof PurchaseOrderLine) {
+                    $addedLines[] = $line;
                     ++$added;
                 } else {
                     ++$skipped;
                 }
             }
             $this->entityManager->flush();
+            if ($creating) {
+                $this->orderActivity->created($order);
+            }
+            $this->orderActivity->added($order, $addedLines);
 
             if ($added > 0) {
                 $this->addFlash('success', 'purchase_order.part_added');
@@ -137,9 +148,14 @@ final class PurchaseOrderController extends AbstractController
             }
             $this->applyOrderedAt($order, $request);
             $this->updateLines($request, $order);
-            $this->addPostedPart($request, $order);
-            $this->addPostedExternal($request, $order);
+            $addedLines = [];
+            foreach ([$this->addPostedPart($request, $order), $this->addPostedExternal($request, $order)] as $line) {
+                if ($line instanceof PurchaseOrderLine) {
+                    $addedLines[] = $line;
+                }
+            }
             $this->entityManager->flush();
+            $this->orderActivity->added($order, $addedLines);
             $this->addFlash('success', 'purchase_order.saved');
 
             return $this->redirectToRoute('purchase_order_show', ['id' => $order->getId()]);
@@ -330,15 +346,15 @@ final class PurchaseOrderController extends AbstractController
         }
     }
 
-    private function addPostedExternal(Request $request, PurchaseOrder $order): void
+    private function addPostedExternal(Request $request, PurchaseOrder $order): ?PurchaseOrderLine
     {
         $value = $request->request->get('external_name');
         if (!is_scalar($value)) {
-            return;
+            return null;
         }
         $name = trim((string) $value);
         if ($name === '') {
-            return;
+            return null;
         }
 
         $line = new PurchaseOrderLine();
@@ -353,24 +369,31 @@ final class PurchaseOrderController extends AbstractController
             $line->setSupplier($supplier);
         }
         $order->addLine($line);
+
+        return $line;
     }
 
-    private function addPostedPart(Request $request, PurchaseOrder $order): void
+    private function addPostedPart(Request $request, PurchaseOrder $order): ?PurchaseOrderLine
     {
         $partId = $this->intField($request, 'add_part');
         if ($partId <= 0) {
-            return;
+            return null;
         }
 
         $part = $this->visiblePart($partId);
         if (!$part instanceof Part) {
             $this->addFlash('error', 'purchase_order.part_missing');
 
-            return;
+            return null;
         }
-        if (!$this->appendPart($order, $part)) {
+        $line = $this->appendPart($order, $part);
+        if (!$line instanceof PurchaseOrderLine) {
             $this->addFlash('warning', 'purchase_order.part_already');
+
+            return null;
         }
+
+        return $line;
     }
 
     private function orderFromRequest(Request $request): PurchaseOrder
@@ -605,10 +628,10 @@ final class PurchaseOrderController extends AbstractController
         return (int) $value;
     }
 
-    private function appendPart(PurchaseOrder $order, Part $part): bool
+    private function appendPart(PurchaseOrder $order, Part $part): ?PurchaseOrderLine
     {
         if ($order->findLineForPart($part) instanceof PurchaseOrderLine) {
-            return false;
+            return null;
         }
 
         $line = new PurchaseOrderLine();
@@ -617,7 +640,7 @@ final class PurchaseOrderController extends AbstractController
         $line->setQuantity($this->stockRefill->orderQuantity($part->getAmountSum(), $part->getMinAmount()));
         $order->addLine($line);
 
-        return true;
+        return $line;
     }
 
     /**

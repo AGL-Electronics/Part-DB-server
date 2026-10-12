@@ -34,6 +34,7 @@ use App\Entity\LogSystem\ExceptionLogEntry;
 use App\Entity\LogSystem\LegacyInstockChangedLogEntry;
 use App\Entity\LogSystem\PartStockChangedLogEntry;
 use App\Entity\LogSystem\PartStockChangeType;
+use App\Entity\LogSystem\PurchaseOrderLogEntry;
 use App\Entity\LogSystem\SecurityEventLogEntry;
 use App\Entity\LogSystem\UserLoginLogEntry;
 use App\Entity\LogSystem\UserLogoutLogEntry;
@@ -176,6 +177,17 @@ class LogEntryExtraFormatter
 
         if ($context instanceof UserNotAllowedLogEntry) {
             $array[] = htmlspecialchars($context->getMessage());
+        }
+
+        if ($context instanceof PurchaseOrderLogEntry) {
+            if ($context->getAction() === PurchaseOrderLogEntry::ACTION_ADDED) {
+                $array[] = htmlspecialchars($this->translator->trans('log.purchase_order.added', [
+                    '%quantity%' => $context->getQuantity(),
+                    '%label%' => $context->getLabel(),
+                ]));
+            } else {
+                $array[] = htmlspecialchars($this->translator->trans('log.purchase_order.created'));
+            }
         }
 
         if ($context instanceof PartStockChangedLogEntry) {

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Tests\Controller;
 
 use App\Entity\LogSystem\PartStockChangedLogEntry;
+use App\Entity\LogSystem\PurchaseOrderLogEntry;
 use App\Entity\Parts\Category;
 use App\Entity\Parts\Part;
 use App\Entity\Parts\PartLot;
@@ -57,6 +58,7 @@ final class PurchaseOrderControllerTest extends WebTestCase
         self::assertStringContainsString($renamed, $content);
         self::assertStringContainsString($part->getName(), $content);
         self::assertCount(1, $crawler->filter('input[name^="remove["]'));
+        $this->assertOrderActivity($client, $orderId, $part->getName());
 
         $client->request('POST', '/en/orders/'.$orderId, [
             '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'$#'),
@@ -511,6 +513,28 @@ final class PurchaseOrderControllerTest extends WebTestCase
         self::assertIsString($token);
 
         return $token;
+    }
+
+    private function assertOrderActivity(KernelBrowser $client, int $orderId, string $partName): void
+    {
+        $entries = array_values(array_filter(
+            $client->getContainer()->get(EntityManagerInterface::class)->getRepository(PurchaseOrderLogEntry::class)->findAll(),
+            static fn (PurchaseOrderLogEntry $entry): bool => $entry->getOrderId() === $orderId,
+        ));
+        $created = array_values(array_filter(
+            $entries,
+            static fn (PurchaseOrderLogEntry $entry): bool => $entry->getAction() === PurchaseOrderLogEntry::ACTION_CREATED,
+        ));
+        $added = array_values(array_filter(
+            $entries,
+            static fn (PurchaseOrderLogEntry $entry): bool => $entry->getAction() === PurchaseOrderLogEntry::ACTION_ADDED,
+        ));
+
+        self::assertCount(1, $created);
+        self::assertSame('admin', $created[0]->getUsername());
+        self::assertCount(1, $added);
+        self::assertSame('admin', $added[0]->getUsername());
+        self::assertSame($partName, $added[0]->getLabel());
     }
 
     private function orderIdFromRedirect(KernelBrowser $client): int
