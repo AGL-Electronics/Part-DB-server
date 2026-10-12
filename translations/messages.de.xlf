@@ -16356,5 +16356,23 @@ Buerklin-API-Authentication-Server:
         <target>Zur Bestellung hinzufügen</target>
       </segment>
     </unit>
+    <unit id="log.type.purchase_order" name="log.type.purchase_order">
+      <segment state="translated">
+        <source>log.type.purchase_order</source>
+        <target>Bestellung</target>
+      </segment>
+    </unit>
+    <unit id="log.purchase_order.created" name="log.purchase_order.created">
+      <segment state="translated">
+        <source>log.purchase_order.created</source>
+        <target>Bestellung angelegt</target>
+      </segment>
+    </unit>
+    <unit id="log.purchase_order.added" name="log.purchase_order.added">
+      <segment state="translated">
+        <source>log.purchase_order.added</source>
+        <target>%quantity% × %label% hinzugefügt</target>
+      </segment>
+    </unit>
   </file>
 </xliff>

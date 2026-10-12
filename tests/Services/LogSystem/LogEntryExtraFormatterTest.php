@@ -24,8 +24,11 @@ declare(strict_types=1);
 namespace App\Tests\Services\LogSystem;
 
 use App\Entity\LogSystem\DatabaseUpdatedLogEntry;
+use App\Entity\LogSystem\PurchaseOrderLogEntry;
 use App\Entity\LogSystem\UserLoginLogEntry;
 use App\Entity\LogSystem\UserLogoutLogEntry;
+use App\Entity\Purchasing\PurchaseOrder;
+use App\Entity\Purchasing\PurchaseOrderLine;
 use App\Services\LogSystem\LogEntryExtraFormatter;
 use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
 
@@ -61,6 +64,22 @@ final class LogEntryExtraFormatterTest extends WebTestCase
         $result = self::$service->format($entry);
         $this->assertNotEmpty($result);
         $this->assertStringContainsString('10.0.0.1', $result);
+    }
+
+    public function testFormatPurchaseOrderRecordsWhoAddedWhat(): void
+    {
+        $order = new PurchaseOrder();
+        $order->setName('Shelf');
+        $order->setNumber('PO-1');
+        $line = new PurchaseOrderLine();
+        $line->setExternalName('M3 screw');
+        $line->setQuantity(4);
+
+        $created = self::$service->format(PurchaseOrderLogEntry::created($order));
+        $added = self::$service->format(PurchaseOrderLogEntry::added($order, $line));
+
+        $this->assertStringContainsString('Created this order', $created);
+        $this->assertStringContainsString('Added 4 × M3 screw', $added);
     }
 
     public function testFormatConsoleReplacesHtmlTags(): void

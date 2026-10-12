@@ -24,12 +24,15 @@ namespace App\Services\LogSystem;
 
 use App\Entity\Base\AbstractDBElement;
 use App\Entity\LogSystem\AbstractLogEntry;
+use App\Entity\LogSystem\PurchaseOrderLogEntry;
 use App\Entity\LogSystem\UserNotAllowedLogEntry;
+use App\Entity\Purchasing\PurchaseOrder;
 use App\Repository\LogEntryRepository;
 use App\Services\ElementTypeNameGenerator;
 use App\Services\EntityURLGenerator;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Routing\Generator\UrlGeneratorInterface;
 use Symfony\Contracts\Translation\TranslatorInterface;
 
 class LogTargetHelper
@@ -37,7 +40,8 @@ class LogTargetHelper
     protected LogEntryRepository $entryRepository;
 
     public function __construct(protected EntityManagerInterface $em, protected EntityURLGenerator $entityURLGenerator,
-        protected ElementTypeNameGenerator $elementTypeNameGenerator, protected TranslatorInterface $translator)
+        protected ElementTypeNameGenerator $elementTypeNameGenerator, protected TranslatorInterface $translator,
+        protected UrlGeneratorInterface $urlGenerator)
     {
         $this->entryRepository = $em->getRepository(AbstractLogEntry::class);
     }
@@ -60,6 +64,10 @@ class LogTargetHelper
             return htmlspecialchars($context->getPath());
         }
 
+        if ($context instanceof PurchaseOrderLogEntry) {
+            return $this->formatPurchaseOrder($context);
+        }
+
         /** @var AbstractLogEntry $context */
         $target = $this->entryRepository->getTargetElement($context);
 
@@ -75,5 +83,24 @@ class LogTargetHelper
 
         //Otherwise we can return a label for the target
         return $this->elementTypeNameGenerator->formatLabelHTMLForEntity($target, $options['show_associated']);
+    }
+
+    private function formatPurchaseOrder(PurchaseOrderLogEntry $context): string
+    {
+        $label = trim($context->getOrderNumber().' '.$context->getOrderName());
+        if ($label === '') {
+            $label = '#'.$context->getOrderId();
+        }
+        $safeLabel = htmlspecialchars($label);
+        $order = $this->em->find(PurchaseOrder::class, $context->getOrderId());
+        if (!$order instanceof PurchaseOrder) {
+            return $safeLabel;
+        }
+
+        return sprintf(
+            '<a href="%s">%s</a>',
+            htmlspecialchars($this->urlGenerator->generate('purchase_order_show', ['id' => $order->getId()])),
+            $safeLabel,
+        );
     }
 }

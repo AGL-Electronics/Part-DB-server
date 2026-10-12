@@ -16802,5 +16802,23 @@ Buerklin-API Authentication server:
         <target>Add %part% to the database before checking it in.</target>
       </segment>
     </unit>
+    <unit id="log.type.purchase_order" name="log.type.purchase_order">
+      <segment state="translated">
+        <source>log.type.purchase_order</source>
+        <target>Purchase order</target>
+      </segment>
+    </unit>
+    <unit id="log.purchase_order.created" name="log.purchase_order.created">
+      <segment state="translated">
+        <source>log.purchase_order.created</source>
+        <target>Created this order</target>
+      </segment>
+    </unit>
+    <unit id="log.purchase_order.added" name="log.purchase_order.added">
+      <segment state="translated">
+        <source>log.purchase_order.added</source>
+        <target>Added %quantity% × %label%</target>
+      </segment>
+    </unit>
   </file>
 </xliff>

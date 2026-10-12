@@ -42,6 +42,7 @@ use App\Entity\LogSystem\ElementCreatedLogEntry;
 use App\Entity\LogSystem\ElementDeletedLogEntry;
 use App\Entity\LogSystem\ElementEditedLogEntry;
 use App\Entity\LogSystem\PartStockChangedLogEntry;
+use App\Entity\LogSystem\PurchaseOrderLogEntry;
 use App\Entity\UserSystem\User;
 use App\Exceptions\EntityNotSupportedException;
 use App\Repository\LogEntryRepository;
@@ -320,6 +321,7 @@ final readonly class LogDataTable implements DataTableTypeInterface
                 ->orWhere('log INSTANCE OF '.ElementDeletedLogEntry::class)
                 ->orWhere('log INSTANCE OF '.ElementEditedLogEntry::class)
                 ->orWhere('log INSTANCE OF '.CollectionElementDeleted::class)
+                ->orWhere('log INSTANCE OF '.PurchaseOrderLogEntry::class)
                 ->andWhere('log.target_type NOT IN (:disallowed)');
 
             $builder->setParameter('disallowed', [

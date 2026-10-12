@@ -38,7 +38,7 @@ use Symfony\Component\Uid\Uuid;
 #[ORM\Table('log')]
 #[ORM\InheritanceType('SINGLE_TABLE')]
 #[ORM\DiscriminatorColumn(name: 'type', type: 'smallint')]
-#[ORM\DiscriminatorMap([1 => 'UserLoginLogEntry', 2 => 'UserLogoutLogEntry', 3 => 'UserNotAllowedLogEntry', 4 => 'ExceptionLogEntry', 5 => 'ElementDeletedLogEntry', 6 => 'ElementCreatedLogEntry', 7 => 'ElementEditedLogEntry', 8 => 'ConfigChangedLogEntry', 9 => 'LegacyInstockChangedLogEntry', 10 => 'DatabaseUpdatedLogEntry', 11 => 'CollectionElementDeleted', 12 => 'SecurityEventLogEntry', 13 => 'PartStockChangedLogEntry'])]
+#[ORM\DiscriminatorMap([1 => 'UserLoginLogEntry', 2 => 'UserLogoutLogEntry', 3 => 'UserNotAllowedLogEntry', 4 => 'ExceptionLogEntry', 5 => 'ElementDeletedLogEntry', 6 => 'ElementCreatedLogEntry', 7 => 'ElementEditedLogEntry', 8 => 'ConfigChangedLogEntry', 9 => 'LegacyInstockChangedLogEntry', 10 => 'DatabaseUpdatedLogEntry', 11 => 'CollectionElementDeleted', 12 => 'SecurityEventLogEntry', 13 => 'PartStockChangedLogEntry', 14 => 'PurchaseOrderLogEntry'])]
 #[ORM\Index(name: 'log_idx_type', columns: ['type'])]
 #[ORM\Index(name: 'log_idx_type_target', columns: ['type', 'target_type', 'target_id'])]
 #[ORM\Index(name: 'log_idx_datetime', columns: ['datetime'])]

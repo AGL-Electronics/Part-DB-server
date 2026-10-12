@@ -27,6 +27,7 @@ use App\Entity\LogSystem\AccessMethod;
 use App\Entity\LogSystem\LogLevel;
 use App\Entity\LogSystem\LogTargetType;
 use App\Entity\LogSystem\PartStockChangedLogEntry;
+use App\Entity\LogSystem\PurchaseOrderLogEntry;
 use App\Entity\LogSystem\CollectionElementDeleted;
 use App\Entity\LogSystem\DatabaseUpdatedLogEntry;
 use App\Entity\LogSystem\ElementCreatedLogEntry;
@@ -62,6 +63,7 @@ class LogFilterType extends AbstractType
         'log.type.user_logout' => UserLogoutLogEntry::class,
         'log.type.user_not_allowed' => UserNotAllowedLogEntry::class,
         'log.type.part_stock_changed' => PartStockChangedLogEntry::class,
+        'log.type.purchase_order' => PurchaseOrderLogEntry::class,
 
         //Legacy entries
         'log.type.instock_changed' => LegacyInstockChangedLogEntry::class,
