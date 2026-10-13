@@ -55,6 +55,8 @@ jobs:
           coverage: pcov
           ini-values: xdebug.max_nesting_level=1000
           extensions: mbstring, intl, gd, xsl, gmp, bcmath, :php-psr
+        env:
+          runner: self-hosted
 
         #- name: Setup MySQL
       #  uses: mirromutth/mysql-action@v1.1
@@ -76,6 +78,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Enable Yarn
+        run: corepack enable && corepack prepare yarn@1.22.22 --activate
+
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
@@ -90,11 +100,6 @@ jobs:
 
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-progress
-
-      - name: Setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22'
 
       - name: Install yarn dependencies
         run: yarn install

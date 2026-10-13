@@ -29,6 +29,8 @@ jobs:
         ini-values: xdebug.max_nesting_level=1000
         extensions: mbstring, intl, gd, xsl, gmp, bcmath, :php-psr
         tools: symfony-cli
+      env:
+        runner: self-hosted
 
     - name: Get Composer Cache Directory
       id: composer-cache

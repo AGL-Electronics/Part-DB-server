@@ -62,7 +62,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/aglelectronics/part-db-server
+          images: ghcr.io/agl-electronics/part-db-server
           tags: |
             type=sha,prefix=sha-,format=short
             type=raw,value=pr-${{ github.event.pull_request.number }}
@@ -136,7 +136,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/aglelectronics/part-db-server
+          images: ghcr.io/agl-electronics/part-db-server
           labels: |
             org.opencontainers.image.title=Part-DB
             org.opencontainers.image.description=Part-DB with the mechanical parts library
@@ -150,7 +150,7 @@ jobs:
           file: Dockerfile
           platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
-          outputs: type=image,name=ghcr.io/aglelectronics/part-db-server,push-by-digest=true,name-canonical=true,push=true
+          outputs: type=image,name=ghcr.io/agl-electronics/part-db-server,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             PARTDB_BUILD_VERSION=${{ github.ref_type == 'tag' && github.ref_name || '' }}
           cache-from: type=gha,scope=prod-image-${{ matrix.slug }}
@@ -199,7 +199,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/aglelectronics/part-db-server
+          images: ghcr.io/agl-electronics/part-db-server
           tags: |
             type=sha,prefix=sha-,format=short
             type=raw,value=master,enable=${{ github.ref == 'refs/heads/master' }}
@@ -219,7 +219,7 @@ jobs:
             fi
           done <<< "$TAGS"
           for digest in *; do
-            args+=("ghcr.io/aglelectronics/part-db-server@sha256:${digest}")
+            args+=("ghcr.io/agl-electronics/part-db-server@sha256:${digest}")
           done
           docker buildx imagetools create "${args[@]}"
 
