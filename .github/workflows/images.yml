@@ -258,8 +258,8 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           user: ${{ secrets.DEPLOY_USER }}
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
-          ghcr-user: ${{ secrets.GHCR_PULL_USER }}
-          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN }}
+          ghcr-user: ${{ secrets.GHCR_PULL_USER || github.actor }}
+          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN || secrets.GITHUB_TOKEN }}
 
   deploy-dev:
     name: Deploy dev
@@ -287,5 +287,5 @@ jobs:
           host: ${{ secrets.DEPLOY_HOST }}
           user: ${{ secrets.DEPLOY_USER }}
           ssh-key: ${{ secrets.DEPLOY_SSH_KEY }}
-          ghcr-user: ${{ secrets.GHCR_PULL_USER }}
-          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN }}
+          ghcr-user: ${{ secrets.GHCR_PULL_USER || github.actor }}
+          ghcr-token: ${{ secrets.GHCR_PULL_TOKEN || secrets.GITHUB_TOKEN }}
