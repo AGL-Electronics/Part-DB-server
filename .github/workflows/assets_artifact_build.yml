@@ -19,7 +19,7 @@ on:
 jobs:
   assets_artifact_build:
     name: Build assets artifact
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64, aglelectronics]
     permissions:
       contents: write
 
@@ -36,6 +36,8 @@ jobs:
           coverage: none
           ini-values: xdebug.max_nesting_level=1000
           extensions: mbstring, intl, gd, xsl, gmp, bcmath, :php-psr
+        env:
+          runner: self-hosted
 
       - name: Get Composer Cache Directory
         id: composer-cache
@@ -52,6 +54,14 @@ jobs:
       - name: Install dependencies
         run: composer install --prefer-dist --no-progress --no-dev -a
 
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Enable Yarn
+        run: corepack enable && corepack prepare yarn@1.22.22 --activate
+
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
@@ -63,11 +73,6 @@ jobs:
           key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
           restore-keys: |
             ${{ runner.os }}-yarn-
-
-      - name: Setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22'
 
       - name: Install yarn dependencies
         run: yarn install

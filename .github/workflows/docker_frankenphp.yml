@@ -19,15 +19,12 @@ jobs:
       matrix:
         include:
           - platform: linux/amd64
-            runner: ubuntu-latest
             platform-slug: amd64
           - platform: linux/arm64
-            runner: ubuntu-24.04-arm
             platform-slug: arm64
           - platform: linux/arm/v7
-            runner: ubuntu-24.04-arm
             platform-slug: armv7
-    runs-on: ${{ matrix.runner }}
+    runs-on: [self-hosted, linux, x64, aglelectronics]
     steps:
       -
         name: Checkout
@@ -63,6 +60,9 @@ jobs:
           flavor: |
             latest=false
 
+      -
+        name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
       -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
@@ -106,7 +106,7 @@ jobs:
           retention-days: 1
 
   merge:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, aglelectronics]
     needs:
       - build
     if: github.event_name != 'pull_request'

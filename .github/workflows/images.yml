@@ -32,6 +32,7 @@ on:
 permissions:
   contents: read
   packages: write
+  actions: write
 
 concurrency:
   group: cicd-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}-${{ github.event.inputs.deploy || 'auto' }}
@@ -41,7 +42,7 @@ jobs:
   test-image:
     name: Test image
     if: github.event_name == 'pull_request'
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, aglelectronics]
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -61,7 +62,7 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/aglelectronics/part-db-server
+          images: ghcr.io/agl-electronics/part-db-server
           tags: |
             type=sha,prefix=sha-,format=short
             type=raw,value=pr-${{ github.event.pull_request.number }}
@@ -83,11 +84,19 @@ jobs:
           cache-to: type=gha,mode=max,scope=test-image
 
   release-image:
-    name: Release image
+    name: Release image (${{ matrix.slug }})
     if: >-
       (github.event_name == 'push' && (github.ref == 'refs/heads/master' || github.ref_type == 'tag')) ||
       (github.event_name == 'workflow_dispatch' && (inputs.deploy == 'none' || inputs.rebuild))
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, linux, x64, aglelectronics]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: linux/amd64
+            slug: amd64
+          - platform: linux/arm64
+            slug: arm64
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -110,6 +119,7 @@ jobs:
           fi
 
       - name: Set up QEMU
+        if: matrix.platform != 'linux/amd64'
         uses: docker/setup-qemu-action@v4
 
       - name: Set up Docker Buildx
@@ -126,55 +136,114 @@ jobs:
         id: meta
         uses: docker/metadata-action@v6
         with:
-          images: ghcr.io/aglelectronics/part-db-server
-          tags: |
-            type=sha,prefix=sha-,format=short
-            type=raw,value=master,enable=${{ github.ref == 'refs/heads/master' }}
-            type=raw,value=mechanical-preview,enable=${{ github.ref == 'refs/heads/master' }}
-            type=ref,event=tag
-            type=raw,value=${{ inputs.image_tag }},enable=${{ github.event_name == 'workflow_dispatch' && inputs.image_tag != '' }}
+          images: ghcr.io/agl-electronics/part-db-server
           labels: |
             org.opencontainers.image.title=Part-DB
             org.opencontainers.image.description=Part-DB with the mechanical parts library
             org.opencontainers.image.licenses=AGPL-3.0-or-later
 
       - name: Build and publish release image
+        id: build
         uses: docker/build-push-action@v7
         with:
           context: .
           file: Dockerfile
-          platforms: linux/amd64,linux/arm64
-          push: true
-          tags: ${{ steps.meta.outputs.tags }}
+          platforms: ${{ matrix.platform }}
           labels: ${{ steps.meta.outputs.labels }}
+          outputs: type=image,name=ghcr.io/agl-electronics/part-db-server,push-by-digest=true,name-canonical=true,push=true
           build-args: |
             PARTDB_BUILD_VERSION=${{ github.ref_type == 'tag' && github.ref_name || '' }}
-          cache-from: type=gha,scope=prod-image
-          cache-to: type=gha,mode=max,scope=prod-image
+          cache-from: type=gha,scope=prod-image-${{ matrix.slug }}
+          cache-to: type=gha,mode=max,scope=prod-image-${{ matrix.slug }}
           provenance: mode=max
           sbom: true
 
+      - name: Export digest
+        run: |
+          mkdir -p /tmp/digests
+          digest="${{ steps.build.outputs.digest }}"
+          touch "/tmp/digests/${digest#sha256:}"
+
+      - name: Upload digest
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-digest-${{ matrix.slug }}
+          path: /tmp/digests/*
+          if-no-files-found: error
+          retention-days: 1
+
+  release-manifest:
+    name: Publish release image
+    needs: release-image
+    if: needs.release-image.result == 'success'
+    runs-on: [self-hosted, linux, x64, aglelectronics]
+    steps:
+      - name: Download digests
+        uses: actions/download-artifact@v8
+        with:
+          path: /tmp/digests
+          pattern: release-digest-*
+          merge-multiple: true
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Generate image metadata
+        id: meta
+        uses: docker/metadata-action@v6
+        with:
+          images: ghcr.io/agl-electronics/part-db-server
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=master,enable=${{ github.ref == 'refs/heads/master' }}
+            type=raw,value=mechanical-preview,enable=${{ github.ref == 'refs/heads/master' }}
+            type=ref,event=tag
+            type=raw,value=${{ inputs.image_tag }},enable=${{ github.event_name == 'workflow_dispatch' && inputs.image_tag != '' }}
+
+      - name: Create manifest list and push
+        working-directory: /tmp/digests
+        env:
+          TAGS: ${{ steps.meta.outputs.tags }}
+        run: |
+          args=()
+          while IFS= read -r tag; do
+            if [ -n "$tag" ]; then
+              args+=(-t "$tag")
+            fi
+          done <<< "$TAGS"
+          for digest in *; do
+            args+=("ghcr.io/agl-electronics/part-db-server@sha256:${digest}")
+          done
+          docker buildx imagetools create "${args[@]}"
+
   deploy-prod:
     name: Deploy production
-    needs: release-image
+    needs: release-manifest
     if: >-
       always() &&
       (
         (
           github.event_name == 'push' &&
           (github.ref == 'refs/heads/master' || github.ref_type == 'tag') &&
-          needs.release-image.result == 'success'
+          needs.release-manifest.result == 'success'
         ) ||
         (
           github.event_name == 'workflow_dispatch' &&
           inputs.deploy == 'prod' &&
           (
-            needs.release-image.result == 'success' ||
-            (needs.release-image.result == 'skipped' && inputs.rebuild == false)
+            needs.release-manifest.result == 'success' ||
+            (needs.release-manifest.result == 'skipped' && inputs.rebuild == false)
           )
         )
       )
-    runs-on: ${{ vars.DEPLOY_RUNNER || 'ubuntu-latest' }}
+    runs-on: [self-hosted, linux, x64, aglelectronics]
     environment: production
     steps:
       - name: Checkout
@@ -194,16 +263,16 @@ jobs:
 
   deploy-dev:
     name: Deploy dev
-    needs: release-image
+    needs: release-manifest
     if: >-
       always() &&
       github.event_name == 'workflow_dispatch' &&
       inputs.deploy == 'dev' &&
       (
-        needs.release-image.result == 'success' ||
-        (needs.release-image.result == 'skipped' && inputs.rebuild == false)
+        needs.release-manifest.result == 'success' ||
+        (needs.release-manifest.result == 'skipped' && inputs.rebuild == false)
       )
-    runs-on: ${{ vars.DEPLOY_RUNNER || 'ubuntu-latest' }}
+    runs-on: [self-hosted, linux, x64, aglelectronics]
     environment: dev
     steps:
       - name: Checkout

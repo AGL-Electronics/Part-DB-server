@@ -16,7 +16,7 @@ on:
 jobs:
   phpunit:
     name: PHPUnit and coverage Test (PHP ${{ matrix.php-versions }}, ${{ matrix.db-type }})
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64, aglelectronics]
 
     strategy:
       fail-fast: false
@@ -33,20 +33,20 @@ jobs:
       CHECK_FOR_UPDATES: false  # Disable update checks for tests
 
     steps:
-      - name: Set Database env for MySQL
-        run: echo "DATABASE_URL=mysql://root:root@127.0.0.1:3306/partdb?serverVersion=8.0.35" >> $GITHUB_ENV
-        if: matrix.db-type == 'mysql'
+      - name: Checkout
+        uses: actions/checkout@v7
 
       - name: Set Database env for SQLite
         run: echo "DATABASE_URL="sqlite:///%kernel.project_dir%/var/app_test.db"" >> $GITHUB_ENV
         if: matrix.db-type == 'sqlite'
 
-      - name: Set Database env for PostgreSQL
-        run: echo "DATABASE_URL=postgresql://postgres:postgres @127.0.0.1:5432/partdb?serverVersion=14&charset=utf8" >> $GITHUB_ENV
-        if: matrix.db-type == 'postgres'
+      - name: Start MySQL
+        if: matrix.db-type == 'mysql'
+        run: bash .github/assets/ci-database.sh start mysql "partdb-mysql-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.php-versions }}"
 
-      - name: Checkout
-        uses: actions/checkout@v7
+      - name: Start PostgreSQL
+        if: matrix.db-type == 'postgres'
+        run: bash .github/assets/ci-database.sh start postgres "partdb-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.php-versions }}"
 
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
@@ -55,18 +55,8 @@ jobs:
           coverage: pcov
           ini-values: xdebug.max_nesting_level=1000
           extensions: mbstring, intl, gd, xsl, gmp, bcmath, :php-psr
-
-      - name: Start MySQL
-        run: sudo systemctl start mysql.service
-        if: matrix.db-type == 'mysql'
-
-        # Replace the scram-sha-256 with trust for host connections, to avoid password authentication
-      - name: Start PostgreSQL
-        run: |
-          sudo sed -i 's/^\(host.*all.*all.*\)scram-sha-256/\1trust/' /etc/postgresql/14/main/pg_hba.conf
-          sudo systemctl start postgresql.service
-          sudo -u postgres psql -c "ALTER USER postgres PASSWORD 'postgres';"
-        if: matrix.db-type == 'postgres'
+        env:
+          runner: self-hosted
 
         #- name: Setup MySQL
       #  uses: mirromutth/mysql-action@v1.1
@@ -88,6 +78,14 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-composer-
 
+      - name: Setup node
+        uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+
+      - name: Enable Yarn
+        run: corepack enable && corepack prepare yarn@1.22.22 --activate
+
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "dir=$(yarn cache dir)" >> "$GITHUB_OUTPUT"
@@ -102,11 +100,6 @@ jobs:
 
       - name: Install composer dependencies
         run: composer install --prefer-dist --no-progress
-
-      - name: Setup node
-        uses: actions/setup-node@v7
-        with:
-          node-version: '22'
 
       - name: Install yarn dependencies
         run: yarn install
@@ -160,4 +153,8 @@ jobs:
         run: bash .github/assets/legacy_import/test_legacy_import.sh
         if: matrix.db-type == 'mysql' && matrix.php-versions == '8.2'
         env:
-          DATABASE_URL: mysql://root:root@localhost:3306/legacy_db
+          DATABASE_URL: mysql://root:root@${{ env.MYSQL_HOST }}:${{ env.MYSQL_PORT }}/legacy_db?serverVersion=8.0.35
+
+      - name: Stop database
+        if: always() && matrix.db-type != 'sqlite'
+        run: bash .github/assets/ci-database.sh stop "partdb-${{ matrix.db-type }}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.php-versions }}"

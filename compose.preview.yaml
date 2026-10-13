@@ -18,7 +18,7 @@ services:
     restart: unless-stopped
 
   partdb:
-    image: ghcr.io/aglelectronics/part-db-server:${PARTDB_TAG:-2.20.0-1}
+    image: ghcr.io/agl-electronics/part-db-server:${PARTDB_TAG:-2.20.0-1}
     pull_policy: always
     container_name: partdb-mechanical-preview
     ports:

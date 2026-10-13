@@ -16,10 +16,18 @@ on:
 jobs:
   eslint:
     name: JavaScript static analysis
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64, aglelectronics]
 
     steps:
     - uses: actions/checkout@v7
+
+    - name: Setup node
+      uses: actions/setup-node@v7
+      with:
+        node-version: '22'
+
+    - name: Enable Yarn
+      run: corepack enable && corepack prepare yarn@1.22.22 --activate
 
     - name: Get yarn cache directory path
       id: yarn-cache-dir-path
@@ -40,6 +48,8 @@ jobs:
           ini-values: xdebug.max_nesting_level=1000
           extensions: mbstring, intl, gd, xsl, gmp, bcmath, :php-psr
           tools: symfony-cli
+      env:
+        runner: self-hosted
 
     - name: Get Composer Cache Directory
       id: composer-cache
@@ -55,11 +65,6 @@ jobs:
 
     - name: Install dependencies
       run: composer install --prefer-dist --no-progress
-
-    - name: Setup node
-      uses: actions/setup-node@v7
-      with:
-        node-version: '22'
 
     - name: Install yarn dependencies
       run: yarn install --frozen-lockfile
