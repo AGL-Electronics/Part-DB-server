@@ -12,7 +12,7 @@ inputs:
     description: GHCR tag to run
     required: true
   host:
-    description: SSH host. Used only from GitHub-hosted runners.
+    description: SSH host. Used when set. A self-hosted runner deploys on its own Docker daemon only when this is empty.
     required: false
     default: ""
   user:
@@ -48,7 +48,7 @@ runs:
         IMAGE_TAG: ${{ inputs.image-tag }}
       run: |
         mode="ssh"
-        if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ]; then
+        if [ "$RUNNER_ENVIRONMENT" = "self-hosted" ] && [ -z "${DEPLOY_HOST:-}" ]; then
           mode="local"
         fi
         bash deploy/up.sh "$mode" "$REMOTE_PATH" "$COMPOSE_FILE" "$IMAGE_TAG"

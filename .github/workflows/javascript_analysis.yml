@@ -16,7 +16,7 @@ on:
 jobs:
   eslint:
     name: JavaScript static analysis
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64, aglelectronics]
 
     steps:
     - uses: actions/checkout@v7

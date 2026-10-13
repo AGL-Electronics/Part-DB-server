@@ -19,7 +19,7 @@ on:
 jobs:
   assets_artifact_build:
     name: Build assets artifact
-    runs-on: ubuntu-22.04
+    runs-on: [self-hosted, linux, x64, aglelectronics]
     permissions:
       contents: write
 
