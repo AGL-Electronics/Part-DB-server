@@ -47,7 +47,9 @@ compose_up() {
     if ! docker compose --env-file "$directory/.env" -f "$directory/compose.yaml" up -d --remove-orphans; then
         echo "Deployment failed. Current Docker containers and published ports:" >&2
         docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' >&2
-        return 1
+        echo "Retrying once after Docker releases the previous container's ports..." >&2
+        sleep 10
+        docker compose --env-file "$directory/.env" -f "$directory/compose.yaml" up -d --remove-orphans
     fi
     docker compose --env-file "$directory/.env" -f "$directory/compose.yaml" ps
 }
