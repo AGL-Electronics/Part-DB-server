@@ -13,7 +13,7 @@ final readonly class OrderCheckInLine
     public function __construct(
         public PurchaseOrderLine $line,
         public int $quantity,
-        public PartLot $lot,
+        public ?PartLot $lot,
         public bool $newLot,
         public ?StorageLocation $location,
     ) {

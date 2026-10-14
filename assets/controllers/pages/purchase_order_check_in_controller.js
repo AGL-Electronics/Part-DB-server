@@ -1,4 +1,5 @@
 import {Controller} from "@hotwired/stimulus";
+import {ConfirmSwal} from "../../helpers/swal";
 
 export default class extends Controller
 {
@@ -6,8 +7,10 @@ export default class extends Controller
         this.filter = 'all';
         this.handleClick = this._handleClick.bind(this);
         this.handleChange = this._handleChange.bind(this);
+        this.handleSubmit = this._handleSubmit.bind(this);
         this.element.addEventListener('click', this.handleClick);
         this.element.addEventListener('change', this.handleChange);
+        this.element.addEventListener('submit', this.handleSubmit);
 
         this.element.querySelectorAll('[data-check-in]').forEach((box) => this._updateRow(box, false));
         this._refresh();
@@ -16,6 +19,7 @@ export default class extends Controller
     disconnect() {
         this.element.removeEventListener('click', this.handleClick);
         this.element.removeEventListener('change', this.handleChange);
+        this.element.removeEventListener('submit', this.handleSubmit);
     }
 
     _handleClick(event) {
@@ -61,6 +65,39 @@ export default class extends Controller
         if (event.target.matches('[data-check-in]')) {
             this._updateRow(event.target);
         }
+    }
+
+    _handleSubmit(event) {
+        const allowMissingStock = this.element.querySelector('[data-allow-missing-stock]');
+        if (!allowMissingStock || allowMissingStock.value === '1') {
+            return;
+        }
+
+        const missingCount = this._rows().filter((row) => {
+            const box = row.querySelector('[data-check-in]');
+            const location = row.querySelector('[data-check-in-stock-location]');
+
+            return box?.checked && location && location.value === '';
+        }).length;
+        if (missingCount === 0) {
+            return;
+        }
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const submitter = event.submitter;
+        ConfirmSwal.fire({
+            titleText: this.element.dataset.missingStockTitle,
+            text: this.element.dataset.missingStockMessage.replace('__COUNT__', String(missingCount)),
+        }).then(({isConfirmed}) => {
+            if (!isConfirmed) {
+                return;
+            }
+
+            allowMissingStock.value = '1';
+            this.element.requestSubmit(submitter ?? undefined);
+        });
     }
 
     _updateRow(box, refresh = true) {

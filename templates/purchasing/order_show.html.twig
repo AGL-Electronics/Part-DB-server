@@ -203,8 +203,19 @@
                     {% endif %}
                     {% if can_edit %}
                         <td>
-                            <input class="form-check-input" type="checkbox" name="remove[{{ line.id }}]"
-                                   form="purchase-order-edit" aria-label="{{ 'purchase_order.remove'|trans }}">
+                            <form method="post"
+                                  action="{{ path('purchase_order_remove_line', {id: order.id, lineId: line.id}) }}"
+                                  {{ stimulus_controller('elements/delete_btn') }}
+                                  {{ stimulus_action('elements/delete_btn', 'submit', 'submit') }}
+                                  data-delete-title="{{ 'purchase_order.remove.confirm_title'|trans({'%part%': line.label})|e('html_attr') }}"
+                                  data-delete-message="{{ 'purchase_order.remove.confirm_message'|trans|e('html_attr') }}">
+                                <input type="hidden" name="_token"
+                                       value="{{ csrf_token('purchase_order_remove_line_' ~ order.id ~ '_' ~ line.id) }}">
+                                <button class="btn btn-outline-danger btn-sm text-nowrap" type="submit">
+                                    <i class="fas fa-trash fa-fw"></i>
+                                    {% trans %}purchase_order.remove{% endtrans %}
+                                </button>
+                            </form>
                         </td>
                     {% endif %}
                 </tr>
@@ -221,14 +232,26 @@
                 <div class="card h-100">
                     <div class="card-body">
                         <h2 class="h5 card-title">{% trans %}purchase_order.add.database_part{% endtrans %}</h2>
-                        <label class="form-label" for="purchase-order-add-part">
-                            {% trans %}purchase_order.add_part_label{% endtrans %}
-                        </label>
-                        <select class="form-select" id="purchase-order-add-part" name="add_part"
-                                form="purchase-order-edit"
-                                {{ stimulus_controller('elements/part_select') }}
-                                data-autocomplete="{{ path('typeahead_parts', {'query': '__QUERY__'}) }}">
-                        </select>
+                        <form class="row g-2 align-items-end" method="post"
+                              action="{{ path('purchase_order_add_database_part', {id: order.id}) }}">
+                            <input type="hidden" name="_token"
+                                   value="{{ csrf_token('purchase_order_add_part_' ~ order.id) }}">
+                            <div class="col">
+                                <label class="form-label" for="purchase-order-add-part">
+                                    {% trans %}purchase_order.add_part_label{% endtrans %}
+                                </label>
+                                <select class="form-select" id="purchase-order-add-part" name="add_part"
+                                        {{ stimulus_controller('elements/part_select') }}
+                                        data-autocomplete="{{ path('typeahead_parts', {'query': '__QUERY__'}) }}">
+                                </select>
+                            </div>
+                            <div class="col-auto">
+                                <button class="btn btn-outline-primary text-nowrap" type="submit">
+                                    <i class="fas fa-plus fa-fw"></i>
+                                    {% trans %}purchase_order.add.action{% endtrans %}
+                                </button>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>

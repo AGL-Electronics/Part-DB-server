@@ -51,36 +51,38 @@ final class PurchaseOrderControllerTest extends WebTestCase
         $client->request('POST', '/en/orders/'.$orderId, [
             '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'$#'),
             'name' => $renamed,
-            'add_part' => (string) $part->getID(),
         ]);
         self::assertResponseRedirects();
         $crawler = $client->followRedirect();
         $content = (string) $client->getResponse()->getContent();
         self::assertStringContainsString($renamed, $content);
-        self::assertStringContainsString($part->getName(), $content);
-        self::assertCount(1, $crawler->filter('input[name^="remove["]'));
+
+        self::assertCount(1, $crawler->filter('form[action$="/orders/'.$orderId.'/lines"] button[type="submit"]'));
+        $client->request('POST', '/en/orders/'.$orderId.'/lines', [
+            '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'/lines$#'),
+            'add_part' => (string) $part->getID(),
+        ]);
+        self::assertResponseRedirects();
+        $crawler = $client->followRedirect();
+        self::assertStringContainsString($part->getName(), (string) $client->getResponse()->getContent());
+        self::assertCount(1, $crawler->filter('form[action*="/lines/"][action$="/delete"] button.btn-outline-danger'));
         $this->assertOrderActivity($client, $orderId, $part->getName());
 
-        $client->request('POST', '/en/orders/'.$orderId, [
-            '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'$#'),
-            'name' => $renamed,
+        $client->request('POST', '/en/orders/'.$orderId.'/lines', [
+            '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'/lines$#'),
             'add_part' => (string) $part->getID(),
         ]);
         $crawler = $client->followRedirect();
         self::assertStringContainsString('That part is already on this order.', (string) $client->getResponse()->getContent());
-        self::assertCount(1, $crawler->filter('input[name^="remove["]'));
+        self::assertCount(1, $crawler->filter('form[action*="/lines/"][action$="/delete"] button.btn-outline-danger'));
 
-        $remove = $crawler->filter('input[name^="remove["]')->attr('name');
-        self::assertIsString($remove);
-        self::assertSame(1, preg_match('/remove\[(\d+)\]/', $remove, $matches));
-        $client->request('POST', '/en/orders/'.$orderId, [
-            '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'$#'),
-            'name' => $renamed,
-            'remove' => [$matches[1] => '1'],
+        $lineId = $this->lineIdForPart($crawler, (int) $part->getID());
+        $client->request('POST', '/en/orders/'.$orderId.'/lines/'.$lineId.'/delete', [
+            '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'/lines/'.$lineId.'/delete$#'),
         ]);
         $crawler = $client->followRedirect();
         self::assertCount(0, $crawler->filter('a[href*="/part/'.$part->getID().'/"]'));
-        self::assertCount(0, $crawler->filter('input[name^="remove["]'));
+        self::assertCount(0, $crawler->filter('form[action*="/lines/"][action$="/delete"] button.btn-outline-danger'));
 
         $client->request('POST', '/en/orders/'.$orderId.'/delete', [
             '_token' => $this->formToken($crawler, '#/delete$#'),
@@ -142,6 +144,38 @@ final class PurchaseOrderControllerTest extends WebTestCase
         );
 
         self::assertSame(['1', '2'], $positions);
+    }
+
+    public function testOrderPageAddsAndRemovesDatabasePartsWithDedicatedActions(): void
+    {
+        $client = $this->client();
+        $part = $this->anyPart($client);
+        $crawler = $client->request('GET', '/en/orders');
+        $client->request('POST', '/en/orders', [
+            '_token' => $this->formToken($crawler, '#/orders$#'),
+            'name' => 'Line-actions-'.bin2hex(random_bytes(3)),
+        ]);
+        $orderId = $this->orderIdFromRedirect($client);
+        $crawler = $client->followRedirect();
+
+        $client->request('POST', '/en/orders/'.$orderId.'/lines', [
+            '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'/lines$#'),
+            'add_part' => (string) $part->getID(),
+        ]);
+        self::assertResponseRedirects();
+        $crawler = $client->followRedirect();
+        $lineId = $this->lineIdForPart($crawler, (int) $part->getID());
+        $removeForm = $crawler->filter('form[action$="/orders/'.$orderId.'/lines/'.$lineId.'/delete"]');
+        self::assertCount(1, $removeForm);
+        self::assertNotSame('', $removeForm->attr('data-delete-title'));
+        self::assertNotSame('', $removeForm->attr('data-delete-message'));
+
+        $client->request('POST', '/en/orders/'.$orderId.'/lines/'.$lineId.'/delete', [
+            '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'/lines/'.$lineId.'/delete$#'),
+        ]);
+        self::assertResponseRedirects();
+        $crawler = $client->followRedirect();
+        self::assertCount(0, $crawler->filter('a[href*="/part/'.$part->getID().'/"]'));
     }
 
     public function testExternalOrderLineCanBeTurnedIntoADatabasePart(): void
@@ -230,7 +264,7 @@ final class PurchaseOrderControllerTest extends WebTestCase
         ]);
         $crawler = $client->followRedirect();
         self::assertStringContainsString('That part is already on this order.', (string) $client->getResponse()->getContent());
-        self::assertCount(1, $crawler->filter('input[name^="remove["]'));
+        self::assertCount(1, $crawler->filter('form[action*="/lines/"][action$="/delete"] button.btn-outline-danger'));
     }
 
     public function testOrderedButtonUsesTheServerDate(): void
@@ -428,7 +462,7 @@ final class PurchaseOrderControllerTest extends WebTestCase
         self::assertSame(['missing', 'completed'], $states);
     }
 
-    public function testCheckInOfAMissingLocationLeavesStockUnchanged(): void
+    public function testCheckInSkipsOnlyLinesWithoutAStorageLocation(): void
     {
         $client = $this->client();
         $created = $this->partWithSingleLot($client, 4.0);
@@ -443,23 +477,45 @@ final class PurchaseOrderControllerTest extends WebTestCase
         $bareLine = $this->lineIdForPart($client->getCrawler(), (int) $bare->getID());
         $lotId = (int) $created['lot']->getID();
         $crawler = $client->request('GET', '/en/orders/'.$orderId.'/check-in');
+        self::assertCount(1, $crawler->filter('form[data-missing-stock-title][data-missing-stock-message]'));
+        self::assertCount(1, $crawler->filter('select[name="location['.$bareLine.']"][data-check-in-stock-location]'));
+        $crawler = $this->postCheckIn($client, $crawler, $orderId, [
+            'step' => 'review',
+            'allow_missing_stock' => '1',
+            'comment' => 'partial stock update',
+            'check' => [$goodLine => '1', $bareLine => '1'],
+            'qty' => [$goodLine => '2', $bareLine => '2'],
+            'lot' => [$goodLine => (string) $lotId],
+        ]);
+        self::assertResponseIsSuccessful();
+        self::assertStringContainsString(
+            'Parts without a storage location: 1.',
+            (string) $client->getResponse()->getContent()
+        );
+        self::assertCount(1, $crawler->filter('tr.table-warning'));
+
         $client->request('POST', '/en/orders/'.$orderId.'/check-in', [
             '_token' => $this->formToken($crawler, '#/check-in$#'),
             'step' => 'confirm',
-            'comment' => 'should not stick',
+            'allow_missing_stock' => '1',
+            'comment' => 'partial stock update',
             'check' => [$goodLine => '1', $bareLine => '1'],
             'qty' => [$goodLine => '2', $bareLine => '2'],
             'lot' => [$goodLine => (string) $lotId],
         ]);
         self::assertResponseRedirects();
         $client->followRedirect();
-        self::assertStringContainsString('Choose a storage location for Part 1.', (string) $client->getResponse()->getContent());
+        self::assertStringContainsString(
+            'Parts without a storage location: 1.',
+            (string) $client->getResponse()->getContent()
+        );
         $em->clear();
-        self::assertSame(4.0, $this->lotAmount($em, $lotId));
+        self::assertSame(6.0, $this->lotAmount($em, $lotId));
         $order = $em->find(PurchaseOrder::class, $orderId);
         self::assertInstanceOf(PurchaseOrder::class, $order);
-        self::assertCount(0, $order->getReceipts());
-        self::assertSame(0, $order->findLineForPart($em->find(Part::class, $created['part']->getID()) ?? $created['part'])?->getQuantityReceived());
+        self::assertCount(1, $order->getReceipts());
+        self::assertSame(2, $order->findLineForPart($em->find(Part::class, $created['part']->getID()) ?? $created['part'])?->getQuantityReceived());
+        self::assertSame(0, $order->findLineForPart($em->find(Part::class, $bare->getID()) ?? $bare)?->getQuantityReceived());
     }
 
     public function testCheckInAsksForALotWhenThePartHasSeveral(): void
