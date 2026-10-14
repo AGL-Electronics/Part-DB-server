@@ -79,7 +79,7 @@ final class OrderCheckIn
      *
      * @return list<OrderCheckInLine>
      */
-    public function resolve(PurchaseOrder $order, array $posted): array
+    public function resolve(PurchaseOrder $order, array $posted, bool $allowMissingStock = false): array
     {
         $resolved = [];
         foreach ($posted as $lineId => $row) {
@@ -88,7 +88,13 @@ final class OrderCheckIn
             if ($row['quantity'] <= 0) {
                 throw new OrderCheckInException('purchase_order.check_in.invalid_quantity', ['%part%' => $part->getName()]);
             }
-            $resolved[] = $this->destination($line, $row['quantity'], $row['lotId'], $row['locationId']);
+            $resolved[] = $this->destination(
+                $line,
+                $row['quantity'],
+                $row['lotId'],
+                $row['locationId'],
+                $allowMissingStock
+            );
         }
 
         return $resolved;
@@ -125,6 +131,9 @@ final class OrderCheckIn
     private function prepareLot(OrderCheckInLine $row, Part $part): PartLot
     {
         $lot = $row->lot;
+        if (!$lot instanceof PartLot) {
+            throw new OrderCheckInException('purchase_order.check_in.no_location', ['%part%' => $part->getName()]);
+        }
         if ($row->newLot) {
             if (!$this->security->isGranted('create', $lot)) {
                 throw new OrderCheckInException('purchase_order.check_in.denied', ['%part%' => $part->getName()]);
@@ -143,7 +152,13 @@ final class OrderCheckIn
         return $lot;
     }
 
-    private function destination(PurchaseOrderLine $line, int $quantity, int $lotId, int $locationId): OrderCheckInLine
+    private function destination(
+        PurchaseOrderLine $line,
+        int $quantity,
+        int $lotId,
+        int $locationId,
+        bool $allowMissingStock,
+    ): OrderCheckInLine
     {
         $part = $this->part($line);
         $usable = $this->usableLots($part);
@@ -162,14 +177,22 @@ final class OrderCheckIn
             throw new OrderCheckInException('purchase_order.check_in.choose_lot', ['%part%' => $part->getName()]);
         }
 
-        return $this->newLot($line, $quantity, $locationId);
+        return $this->newLot($line, $quantity, $locationId, $allowMissingStock);
     }
 
-    private function newLot(PurchaseOrderLine $line, int $quantity, int $locationId): OrderCheckInLine
+    private function newLot(
+        PurchaseOrderLine $line,
+        int $quantity,
+        int $locationId,
+        bool $allowMissingStock,
+    ): OrderCheckInLine
     {
         $part = $this->part($line);
         $choices = $this->locationChoices($part);
         if ($choices === []) {
+            if ($allowMissingStock) {
+                return new OrderCheckInLine($line, $quantity, null, false, null);
+            }
             throw new OrderCheckInException('purchase_order.check_in.no_location', ['%part%' => $part->getName()]);
         }
         $location = null;
@@ -180,6 +203,9 @@ final class OrderCheckIn
             }
         }
         if (!$location instanceof StorageLocation) {
+            if ($locationId === 0 && $allowMissingStock) {
+                return new OrderCheckInLine($line, $quantity, null, false, null);
+            }
             throw new OrderCheckInException('purchase_order.check_in.choose_location', ['%part%' => $part->getName()]);
         }
 

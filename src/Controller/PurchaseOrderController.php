@@ -181,6 +181,49 @@ final class PurchaseOrderController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/lines', name: 'purchase_order_add_database_part', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function addDatabasePart(Request $request, PurchaseOrder $order): Response
+    {
+        $this->denyAccessUnlessGranted('@parts.edit');
+        $this->assertCsrf($request, 'purchase_order_add_part_'.$order->getId());
+
+        if ($this->intField($request, 'add_part') <= 0) {
+            $this->addFlash('error', 'purchase_order.no_parts');
+
+            return $this->redirectToRoute('purchase_order_show', ['id' => $order->getId()]);
+        }
+
+        $line = $this->addPostedPart($request, $order);
+        if ($line instanceof PurchaseOrderLine) {
+            $this->entityManager->flush();
+            $this->orderActivity->added($order, [$line]);
+            $this->addFlash('success', 'purchase_order.part_added');
+        }
+
+        return $this->redirectToRoute('purchase_order_show', ['id' => $order->getId()]);
+    }
+
+    #[Route('/{id}/lines/{lineId}/delete', name: 'purchase_order_remove_line', requirements: ['id' => '\d+', 'lineId' => '\d+'], methods: ['POST'])]
+    public function removeLine(Request $request, PurchaseOrder $order, int $lineId): Response
+    {
+        $this->denyAccessUnlessGranted('@parts.edit');
+        $this->assertCsrf($request, 'purchase_order_remove_line_'.$order->getId().'_'.$lineId);
+
+        $line = $this->lineById($order, $lineId);
+        if (!$line instanceof PurchaseOrderLine) {
+            $this->addFlash('error', 'purchase_order.line_missing');
+
+            return $this->redirectToRoute('purchase_order_show', ['id' => $order->getId()]);
+        }
+
+        $order->removeLine($line);
+        $this->entityManager->remove($line);
+        $this->entityManager->flush();
+        $this->addFlash('success', 'purchase_order.part_removed');
+
+        return $this->redirectToRoute('purchase_order_show', ['id' => $order->getId()]);
+    }
+
     #[Route('/{id}/lines/{lineId}/create-part', name: 'purchase_order_create_part', requirements: ['id' => '\d+', 'lineId' => '\d+'], methods: ['POST'])]
     public function createPart(Request $request, PurchaseOrder $order, int $lineId): Response
     {
@@ -248,12 +291,29 @@ final class PurchaseOrderController extends AbstractController
                 if ($posted === []) {
                     throw new OrderCheckInException('purchase_order.check_in.none_selected');
                 }
-                $resolved = $this->orderCheckIn->resolve($order, $posted);
+                $allowMissingStock = $request->request->get('allow_missing_stock') === '1';
+                $resolved = $this->orderCheckIn->resolve($order, $posted, $allowMissingStock);
+                $stockRows = array_values(array_filter(
+                    $resolved,
+                    static fn (OrderCheckInLine $row): bool => $row->lot instanceof PartLot
+                ));
+                $skippedCount = count($resolved) - count($stockRows);
                 if ($request->request->get('step') === 'confirm') {
-                    $this->orderCheckIn->apply($order, $resolved, $comment);
-                    $this->addFlash('success', 'purchase_order.check_in.confirmed');
+                    if ($stockRows !== []) {
+                        $this->orderCheckIn->apply($order, $stockRows, $comment);
+                        $this->addFlash('success', 'purchase_order.check_in.confirmed');
+                    }
+                    if ($skippedCount > 0) {
+                        $this->addFlash('warning', $this->translator->trans(
+                            'purchase_order.check_in.stock_skipped_warning',
+                            ['%count%' => $skippedCount]
+                        ));
+                    }
 
-                    return $this->redirectToRoute('purchase_order_show', ['id' => $order->getId()]);
+                    return $this->redirectToRoute(
+                        $stockRows === [] ? 'purchase_order_check_in' : 'purchase_order_show',
+                        ['id' => $order->getId()]
+                    );
                 }
 
                 return $this->render('purchasing/order_check_in_review.html.twig', [
@@ -261,6 +321,7 @@ final class PurchaseOrderController extends AbstractController
                     'rows' => $resolved,
                     'comment' => $comment,
                     'destinations' => $this->destinations($resolved),
+                    'skippedCount' => $skippedCount,
                 ]);
             } catch (OrderCheckInException $exception) {
                 $this->addFlash('error', $this->translator->trans($exception->translationKey, $exception->parameters));
@@ -477,6 +538,10 @@ final class PurchaseOrderController extends AbstractController
         foreach ($rows as $row) {
             $lineId = $row->line->getId();
             if ($lineId === null) {
+                continue;
+            }
+            if (!$row->lot instanceof PartLot) {
+                $labels[$lineId] = $this->translator->trans('purchase_order.check_in.stock_skipped');
                 continue;
             }
             if ($row->newLot) {

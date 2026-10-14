@@ -9,9 +9,17 @@
 {% block card_content %}
     <p class="text-muted">{% trans %}purchase_order.check_in.review_hint{% endtrans %}</p>
 
+    {% if skippedCount > 0 %}
+        <div class="alert alert-warning" role="alert">
+            <i class="fas fa-triangle-exclamation me-1"></i>
+            {{ 'purchase_order.check_in.stock_skipped_warning'|trans({'%count%': skippedCount}) }}
+        </div>
+    {% endif %}
+
     <form method="post" action="{{ path('purchase_order_check_in', {id: order.id}) }}">
         <input type="hidden" name="_token" value="{{ csrf_token('purchase_order_check_in_' ~ order.id) }}">
         <input type="hidden" name="step" value="confirm">
+        <input type="hidden" name="allow_missing_stock" value="1">
 
         <div class="table-responsive">
             <table class="table align-middle">
@@ -28,7 +36,7 @@
                 <tbody>
                 {% for row in rows %}
                     {% set line = row.line %}
-                    <tr data-line-id="{{ line.id }}">
+                    <tr data-line-id="{{ line.id }}" {% if not row.lot %}class="table-warning"{% endif %}>
                         <td><strong>{{ line.label }}</strong></td>
                         <td>
                             <span class="badge bg-primary rounded-pill fs-6 px-3 py-2">{{ line.quantity }}</span>
@@ -48,10 +56,12 @@
                             <span class="fw-semibold">{{ destinations[line.id] }}</span>
                             <input type="hidden" name="check[{{ line.id }}]" value="1">
                             <input type="hidden" name="qty[{{ line.id }}]" value="{{ row.quantity }}">
-                            {% if row.newLot %}
-                                <input type="hidden" name="location[{{ line.id }}]" value="{{ row.location.id }}">
-                            {% else %}
-                                <input type="hidden" name="lot[{{ line.id }}]" value="{{ row.lot.id }}">
+                            {% if row.lot %}
+                                {% if row.newLot %}
+                                    <input type="hidden" name="location[{{ line.id }}]" value="{{ row.location.id }}">
+                                {% else %}
+                                    <input type="hidden" name="lot[{{ line.id }}]" value="{{ row.lot.id }}">
+                                {% endif %}
                             {% endif %}
                         </td>
                     </tr>

@@ -13,9 +13,12 @@
     <p class="text-muted">{% trans %}purchase_order.check_in.hint{% endtrans %}</p>
 
     <form method="post" action="{{ path('purchase_order_check_in', {id: order.id}) }}"
-          {{ stimulus_controller('pages/purchase_order_check_in') }}>
+          {{ stimulus_controller('pages/purchase_order_check_in') }}
+          data-missing-stock-title="{{ 'purchase_order.check_in.missing_stock_title'|trans|e('html_attr') }}"
+          data-missing-stock-message="{{ 'purchase_order.check_in.missing_stock_message'|trans({'%count%': '__COUNT__'})|e('html_attr') }}">
         <input type="hidden" name="_token" value="{{ csrf_token('purchase_order_check_in_' ~ order.id) }}">
         <input type="hidden" name="step" value="review">
+        <input type="hidden" name="allow_missing_stock" value="0" data-allow-missing-stock>
 
         <div class="d-flex flex-wrap align-items-center justify-content-between gap-3 rounded border bg-body-tertiary p-3 mb-3"
              data-check-in-toolbar>
@@ -182,7 +185,8 @@
                                         {% endfor %}
                                     </select>
                                 {% else %}
-                                    <select class="form-select" name="location[{{ line.id }}]" data-check-in-detail>
+                                    <select class="form-select" name="location[{{ line.id }}]"
+                                            data-check-in-detail data-check-in-stock-location>
                                         <option value="">{% trans %}purchase_order.check_in.choose_location_option{% endtrans %}</option>
                                         {% for location in row.locations %}
                                             <option value="{{ location.id }}">{{ location.name }}</option>

@@ -15614,6 +15614,12 @@ Buerklin-API Authentication server:
         <target>Parts</target>
       </segment>
     </unit>
+    <unit id="purchase_order.position" name="purchase_order.position">
+      <segment state="translated">
+        <source>purchase_order.position</source>
+        <target>Pos.</target>
+      </segment>
+    </unit>
     <unit id="purchase_order.back" name="purchase_order.back">
       <segment state="translated">
         <source>purchase_order.back</source>
@@ -15734,10 +15740,40 @@ Buerklin-API Authentication server:
         <target>Remove</target>
       </segment>
     </unit>
+    <unit id="purchase_order.remove.confirm_title" name="purchase_order.remove.confirm_title">
+      <segment state="translated">
+        <source>purchase_order.remove.confirm_title</source>
+        <target>Remove %part%?</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.remove.confirm_message" name="purchase_order.remove.confirm_message">
+      <segment state="translated">
+        <source>purchase_order.remove.confirm_message</source>
+        <target>This removes the part from the order. Stock is not changed.</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.part_removed" name="purchase_order.part_removed">
+      <segment state="translated">
+        <source>purchase_order.part_removed</source>
+        <target>Part removed from the order.</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.line_missing" name="purchase_order.line_missing">
+      <segment state="translated">
+        <source>purchase_order.line_missing</source>
+        <target>That order line could not be found.</target>
+      </segment>
+    </unit>
     <unit id="purchase_order.add_part_label" name="purchase_order.add_part_label">
       <segment state="translated">
         <source>purchase_order.add_part_label</source>
         <target>Add a part</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.add.action" name="purchase_order.add.action">
+      <segment state="translated">
+        <source>purchase_order.add.action</source>
+        <target>Add</target>
       </segment>
     </unit>
     <unit id="purchase_order.part_added" name="purchase_order.part_added">
@@ -16032,6 +16068,30 @@ Buerklin-API Authentication server:
       <segment state="translated">
         <source>purchase_order.check_in.choose_location_option</source>
         <target>Choose a location</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.check_in.missing_stock_title" name="purchase_order.check_in.missing_stock_title">
+      <segment state="translated">
+        <source>purchase_order.check_in.missing_stock_title</source>
+        <target>Continue without adding all stock?</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.check_in.missing_stock_message" name="purchase_order.check_in.missing_stock_message">
+      <segment state="translated">
+        <source>purchase_order.check_in.missing_stock_message</source>
+        <target>Parts without a storage location: %count%. Stock will not be added for those parts. Set a storage location and check them in again.</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.check_in.stock_skipped" name="purchase_order.check_in.stock_skipped">
+      <segment state="translated">
+        <source>purchase_order.check_in.stock_skipped</source>
+        <target>Stock not updated (no storage location)</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.check_in.stock_skipped_warning" name="purchase_order.check_in.stock_skipped_warning">
+      <segment state="translated">
+        <source>purchase_order.check_in.stock_skipped_warning</source>
+        <target>Parts without a storage location: %count%. Stock was not updated for those parts. Set a storage location and check them in again.</target>
       </segment>
     </unit>
     <unit id="purchase_order.check_in.default_comment" name="purchase_order.check_in.default_comment">
