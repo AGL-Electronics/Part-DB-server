@@ -160,6 +160,7 @@ jobs:
 
       - name: Export digest
         run: |
+          rm -rf /tmp/digests
           mkdir -p /tmp/digests
           digest="${{ steps.build.outputs.digest }}"
           touch "/tmp/digests/${digest#sha256:}"
@@ -178,6 +179,11 @@ jobs:
     if: needs.release-image.result == 'success'
     runs-on: [self-hosted, linux, x64, aglelectronics]
     steps:
+      - name: Prepare digest directory
+        run: |
+          rm -rf /tmp/digests
+          mkdir -p /tmp/digests
+
       - name: Download digests
         uses: actions/download-artifact@v8
         with:
