@@ -18,6 +18,24 @@ Part-DB follows Symfony's recommended project structure:
 
 Code should follow PSR-12 and Symfony's coding standards.
 
+## Git and release workflow
+
+`origin/master` is the only integration and production-release source.
+
+* Fetch `origin`, then create every feature, fix, documentation, or upstream-sync branch from the current `origin/master`.
+* Never base new work on `upstream/*`, a release tag, or another feature/release branch.
+* Open a focused pull request targeting `master`, validate it, and merge it before building or releasing that change.
+* Do not leave fixes only on a release branch. Merge every shipped change back into `master` before the next release.
+* For an upstream release, create `chore/upstream-X.Y.Z` from `origin/master`, merge the upstream `vX.Y.Z` tag with `--no-ff`, preserve fork customizations while resolving conflicts, and open a pull request to `master`.
+* The daily upstream-sync workflow may create or update a pull request, but it must not merge or release changes automatically.
+
+Production images must contain only commits already merged into `master`:
+
+* Pull requests may publish test images only.
+* A push to `master` publishes the `master` image and deploys that exact commit.
+* Create a versioned release tag only after all intended pull requests are merged. The tag must point at `origin/master`, `VERSION` must match its upstream portion, and the tag must use `X.Y.Z-N` (for example `2.20.1-2`).
+* Push the versioned tag to let `.github/workflows/images.yml` build and deploy the release image. Never tag or deploy a feature or upstream-sync branch.
+
 ## Static analysis
 
 PHPStan runs at level 5 (see `phpstan.dist.neon`). Check code you touch with:
