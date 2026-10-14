@@ -124,6 +124,26 @@ final class PurchaseOrderControllerTest extends WebTestCase
         self::assertMatchesRegularExpression('/^Mech-'.date('Y').'\d{4}$/', $order->getNumber());
     }
 
+    public function testOrderLinesShowSequentialPositionNumbers(): void
+    {
+        $client = $this->client();
+        $first = $this->partWithSingleLot($client, 0.0);
+        $second = $this->partWithSingleLot($client, 0.0);
+        $orderId = $this->createOrderWithParts(
+            $client,
+            'Position-numbers-'.bin2hex(random_bytes(3)),
+            [$first['part'], $second['part']]
+        );
+
+        $crawler = $client->request('GET', '/en/orders/'.$orderId);
+        self::assertResponseIsSuccessful();
+        $positions = $crawler->filter('[data-order-position]')->each(
+            static fn (Crawler $position): string => trim($position->text())
+        );
+
+        self::assertSame(['1', '2'], $positions);
+    }
+
     public function testExternalOrderLineCanBeTurnedIntoADatabasePart(): void
     {
         $client = $this->client();

@@ -92,6 +92,7 @@
         <table class="table table-sm align-middle">
             <thead>
             <tr>
+                <th>{% trans %}purchase_order.position{% endtrans %}</th>
                 <th>{% trans %}part.edit.name{% endtrans %}</th>
                 <th>{% trans %}purchase_order.stock{% endtrans %}</th>
                 <th>{% trans %}purchase_order.minimum{% endtrans %}</th>
@@ -115,6 +116,7 @@
             {% for row in lines %}
                 {% set line = row.line %}
                 <tr>
+                    <th class="text-muted" scope="row" data-order-position>{{ loop.index }}</th>
                     <td>
                         {% if line.part %}
                             <a href="{{ path('part_edit', {id: line.part.id}) }}">{{ line.part.name }}</a>
@@ -207,7 +209,7 @@
                     {% endif %}
                 </tr>
             {% else %}
-                <tr><td colspan="{{ can_edit ? 10 : 9 }}">{% trans %}purchase_order.empty{% endtrans %}</td></tr>
+                <tr><td colspan="{{ can_edit ? 11 : 10 }}">{% trans %}purchase_order.empty{% endtrans %}</td></tr>
             {% endfor %}
             </tbody>
         </table>

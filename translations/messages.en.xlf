@@ -15614,6 +15614,12 @@ Buerklin-API Authentication server:
         <target>Parts</target>
       </segment>
     </unit>
+    <unit id="purchase_order.position" name="purchase_order.position">
+      <segment state="translated">
+        <source>purchase_order.position</source>
+        <target>Pos.</target>
+      </segment>
+    </unit>
     <unit id="purchase_order.back" name="purchase_order.back">
       <segment state="translated">
         <source>purchase_order.back</source>
