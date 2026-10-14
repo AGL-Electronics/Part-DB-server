@@ -44,7 +44,13 @@ compose_up() {
     directory="$1"
     login_ghcr
     docker compose --env-file "$directory/.env" -f "$directory/compose.yaml" pull
-    docker compose --env-file "$directory/.env" -f "$directory/compose.yaml" up -d --remove-orphans
+    if ! docker compose --env-file "$directory/.env" -f "$directory/compose.yaml" up -d --remove-orphans; then
+        echo "Deployment failed. Current Docker containers and published ports:" >&2
+        docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' >&2
+        echo "Retrying once after Docker releases the previous container's ports..." >&2
+        sleep 10
+        docker compose --env-file "$directory/.env" -f "$directory/compose.yaml" up -d --remove-orphans
+    fi
     docker compose --env-file "$directory/.env" -f "$directory/compose.yaml" ps
 }
 
