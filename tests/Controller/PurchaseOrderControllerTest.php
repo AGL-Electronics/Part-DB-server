@@ -139,6 +139,13 @@ final class PurchaseOrderControllerTest extends WebTestCase
 
         $crawler = $client->request('GET', '/en/orders/'.$orderId);
         self::assertResponseIsSuccessful();
+        $order = $this->em($client)->find(PurchaseOrder::class, $orderId);
+        self::assertInstanceOf(PurchaseOrder::class, $order);
+        $numberCopy = $crawler->filter('[data-order-number-copy]');
+        self::assertCount(1, $numberCopy);
+        self::assertSame($order->getNumber(), $numberCopy->attr('data-clipboard-text'));
+        self::assertSame('Copy PO number', $numberCopy->attr('title'));
+
         $positions = $crawler->filter('[data-order-position]')->each(
             static fn (Crawler $position): string => trim($position->text())
         );

@@ -4,7 +4,14 @@
 
 {% block card_title %}
     <i class="fas fa-cart-shopping"></i>
-    <strong>{{ order.number }}</strong>
+    <button type="button"
+            class="btn btn-link text-reset text-decoration-none p-0 border-0 align-baseline fw-bold"
+            style="font-size: inherit"
+            data-clipboard-text="{{ order.number }}"
+            data-order-number-copy
+            title="{{ 'purchase_order.copy_number'|trans }}">
+        {{ order.number }} <i class="fas fa-copy fa-xs ms-1" aria-hidden="true"></i>
+    </button>
     <span class="badge bg-secondary">{{ ('purchase_order.kind.' ~ order.kind)|trans }}</span>
     <span class="ms-1">{{ order.name }}</span>
     <a class="btn btn-outline-light btn-sm float-end" href="{{ path('purchase_orders_list') }}">

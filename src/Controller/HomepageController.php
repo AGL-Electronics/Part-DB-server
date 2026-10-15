@@ -38,6 +38,8 @@ use Symfony\Component\Routing\Attribute\Route;
 
 class HomepageController extends AbstractController
 {
+    private const FORK_REPOSITORY_URL = 'https://github.com/AGL-Electronics/Part-DB-server';
+
     public function __construct(
         private readonly DataTableFactory $dataTable,
         private readonly BannerHelper $bannerHelper,
@@ -82,14 +84,27 @@ class HomepageController extends AbstractController
         }
 
         $buildVersion = getenv('PARTDB_BUILD_VERSION');
-        $buildLabel = is_string($buildVersion) ? trim($buildVersion) : '';
-        if (preg_match('/^\d+\.\d+\.\d+-[1-9]\d*$/', $buildLabel) !== 1) {
-            $buildLabel = '';
+        $buildVersion = is_string($buildVersion) ? trim($buildVersion) : '';
+        $buildLabel = null;
+        $buildChangelogUrl = null;
+        if (preg_match('/^(\d+\.\d+\.\d+)-([1-9]\d*)$/', $buildVersion, $matches) === 1) {
+            $buildLabel = $matches[2];
+            $buildNumber = (int) $buildLabel;
+            $buildChangelogUrl = $buildNumber > 1
+                ? sprintf(
+                    '%s/compare/%s-%d...%s',
+                    self::FORK_REPOSITORY_URL,
+                    $matches[1],
+                    $buildNumber - 1,
+                    $buildVersion
+                )
+                : self::FORK_REPOSITORY_URL.'/commits/'.$buildVersion;
         }
 
         return $this->render('homepage.html.twig', [
             'banner' => $this->bannerHelper->getBanner(),
-            'build_label' => $buildLabel !== '' ? $buildLabel : null,
+            'build_label' => $buildLabel,
+            'build_changelog_url' => $buildChangelogUrl,
             'git_branch' => $versionInfo->getBranchName(),
             'git_commit' => $versionInfo->getCommitHash(),
             'show_first_steps' => $show_first_steps,

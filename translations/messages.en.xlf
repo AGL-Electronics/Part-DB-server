@@ -837,6 +837,12 @@ Sub elements will be moved upwards.</target>
         <target>Last activity</target>
       </segment>
     </unit>
+    <unit id="homepage.build_changelog" name="homepage.build_changelog">
+      <segment state="translated">
+        <source>homepage.build_changelog</source>
+        <target>View changes in build %build%</target>
+      </segment>
+    </unit>
     <unit id="2dQyxo8" name="label_generator.title">
       <segment state="translated">
         <source>label_generator.title</source>
@@ -16776,6 +16782,12 @@ Buerklin-API Authentication server:
       <segment state="translated">
         <source>purchase_order.number</source>
         <target>PO number</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.copy_number" name="purchase_order.copy_number">
+      <segment state="translated">
+        <source>purchase_order.copy_number</source>
+        <target>Copy PO number</target>
       </segment>
     </unit>
     <unit id="purchase_order.kind" name="purchase_order.kind">
