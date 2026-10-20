@@ -564,6 +564,12 @@ Sub elements will be moved upwards.</target>
         <target>Include children elements in export</target>
       </segment>
     </unit>
+    <unit id="6wLa6Z0" name="export.format.csv_escaped">
+      <segment>
+        <source>export.format.csv_escaped</source>
+        <target>CSV (formulas escaped)</target>
+      </segment>
+    </unit>
     <unit id="Pdmfku8" name="export.btn">
       <segment state="translated">
         <source>export.btn</source>
@@ -3200,7 +3206,7 @@ If you have done this incorrectly or if a computer is no longer trusted, you can
     <unit id="AdYtBQG" name="attachment.edit.url.help">
       <segment state="translated">
         <source>attachment.edit.url.help</source>
-        <target>You can specify a URL to an external file here, or input a keyword which is used to search in built-in resources (e.g. footprints)</target>
+        <target>You can specify a URL to an external file here, or input a keyword which is used to search in built-in resources (e.g. footprints). You can also paste a file (e.g. an image) from the clipboard here, to upload it.</target>
       </segment>
     </unit>
     <unit id="jXplbqd" name="attachment.edit.name">
@@ -8395,6 +8401,12 @@ Element 1 -&gt; Element 1.2</target>
       <segment state="translated">
         <source>part_list.action.export_csv</source>
         <target>Export to CSV</target>
+      </segment>
+    </unit>
+    <unit id="DPazsak" name="part_list.action.export_csv_escaped">
+      <segment state="translated">
+        <source>part_list.action.export_csv_escaped</source>
+        <target>Export to CSV (formulas escaped)</target>
       </segment>
     </unit>
     <unit id="gvVAAJZ" name="part_list.action.export_yaml">
@@ -16956,6 +16968,66 @@ Buerklin-API Authentication server:
       <segment state="translated">
         <source>log.purchase_order.added</source>
         <target>Added %quantity% × %label%</target>
+      </segment>
+    </unit>
+    <unit id="jOVOl7G" name="info_providers.search.direct_access_link">
+      <segment state="translated">
+        <source>info_providers.search.direct_access_link</source>
+        <target>Retrieve part directly by provider ID</target>
+      </segment>
+    </unit>
+    <unit id="dn43zJz" name="info_providers.direct_access.title">
+      <segment state="translated">
+        <source>info_providers.direct_access.title</source>
+        <target>Retrieve [part] directly from info provider</target>
+      </segment>
+    </unit>
+    <unit id="1EjKXME" name="info_providers.direct_access.help">
+      <segment state="translated">
+        <source>info_providers.direct_access.help</source>
+        <target>Retrieve the details of a part directly by its ID at the info provider, without searching first. This is useful for parts which are not found by the search, e.g. archived or discontinued parts.</target>
+      </segment>
+    </unit>
+    <unit id="LbPbRhx" name="info_providers.direct_access.provider">
+      <segment state="translated">
+        <source>info_providers.direct_access.provider</source>
+        <target>Info provider</target>
+      </segment>
+    </unit>
+    <unit id="ACQB0nJ" name="info_providers.direct_access.provider_id">
+      <segment state="translated">
+        <source>info_providers.direct_access.provider_id</source>
+        <target>Part ID at provider</target>
+      </segment>
+    </unit>
+    <unit id="1qA4aJW" name="info_providers.direct_access.provider_id.help">
+      <segment state="translated">
+        <source>info_providers.direct_access.provider_id.help</source>
+        <target>The ID which identifies the part at the info provider. Usually this is the order number (SPN) of the distributor or the manufacturer part number (MPN).</target>
+      </segment>
+    </unit>
+    <unit id="12zUHHf" name="info_providers.direct_access.submit">
+      <segment state="translated">
+        <source>info_providers.direct_access.submit</source>
+        <target>Retrieve part</target>
+      </segment>
+    </unit>
+    <unit id="2pKimuv" name="info_providers.search.no_results.direct_access_hint">
+      <segment state="translated">
+        <source>info_providers.search.no_results.direct_access_hint</source>
+        <target>Parts which are not found by the search (e.g. archived parts) can maybe still be retrieved by their ID at the provider:</target>
+      </segment>
+    </unit>
+    <unit id="eGpqplC" name="attachment.create_from_clipboard">
+      <segment state="translated">
+        <source>attachment.create_from_clipboard</source>
+        <target>From clipboard</target>
+      </segment>
+    </unit>
+    <unit id="v7ovlvw" name="info_providers.error.server_exception">
+      <segment state="translated">
+        <source>info_providers.error.server_exception</source>
+        <target>The information provider (%host%) is temporarily unavailable (HTTP %status%). Please try again later.</target>
       </segment>
     </unit>
   </file>
