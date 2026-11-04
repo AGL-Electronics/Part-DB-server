@@ -1,6 +1,8 @@
 ARG PHP_VERSION=8.3
 FROM php:${PHP_VERSION}-cli
 
+ENV COMPOSER_ALLOW_SUPERUSER=1
+
 COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /usr/local/bin/
 
 RUN apt-get update \
