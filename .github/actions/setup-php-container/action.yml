@@ -1,0 +1,37 @@
+name: Set up PHP container
+description: >-
+  Builds a PHP image on the runner's Docker host and puts php, composer and symfony
+  wrappers on PATH. The containerized self-hosted runners use Ubuntu 20.04, which
+  setup-php no longer supports.
+
+inputs:
+  php-version:
+    description: PHP version, such as 8.3
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Build PHP image
+      shell: bash
+      env:
+        PHP_VERSION_INPUT: ${{ inputs.php-version }}
+      run: |
+        image="partdb-ci-php:${PHP_VERSION_INPUT}"
+        docker build \
+          --build-arg "PHP_VERSION=${PHP_VERSION_INPUT}" \
+          -t "$image" \
+          "$GITHUB_ACTION_PATH"
+        echo "PARTDB_CI_PHP_IMAGE=${image}" >> "$GITHUB_ENV"
+        echo "COMPOSER_CACHE_DIR=${RUNNER_TEMP}/composer-cache" >> "$GITHUB_ENV"
+
+    - name: Install wrappers
+      shell: bash
+      run: |
+        bin="${RUNNER_TEMP}/php-container-bin"
+        mkdir -p "$bin"
+        for tool in php composer symfony; do
+          cp "$GITHUB_ACTION_PATH/run.sh" "$bin/$tool"
+          chmod +x "$bin/$tool"
+        done
+        echo "$bin" >> "$GITHUB_PATH"
