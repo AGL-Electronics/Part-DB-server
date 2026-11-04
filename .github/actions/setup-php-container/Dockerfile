@@ -7,7 +7,7 @@ COPY --from=mlocati/php-extension-installer:2 /usr/bin/install-php-extensions /u
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends git unzip \
-    && install-php-extensions intl gd xsl gmp bcmath zip pdo_mysql pdo_pgsql pcov @composer \
+    && install-php-extensions intl gd xsl gmp bcmath zip pdo_mysql pdo_pgsql krakjoe/pcov@v1.0.12 @composer \
     && curl -sS https://get.symfony.com/cli/installer | bash \
     && mv /root/.symfony*/bin/symfony /usr/local/bin/symfony \
     && rm -rf /var/lib/apt/lists/* /root/.symfony*
