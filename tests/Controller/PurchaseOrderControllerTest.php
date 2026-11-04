@@ -13,6 +13,7 @@ use App\Entity\Parts\StorageLocation;
 use App\Entity\Purchasing\PurchaseOrder;
 use App\Entity\Purchasing\PurchaseOrderLine;
 use App\Entity\UserSystem\User;
+use App\Services\Misc\ConsoleInfoHelper;
 use App\Services\Purchasing\OrderCheckIn;
 use App\Services\Purchasing\OrderCheckInException;
 use App\Services\Purchasing\OrderCheckInLine;
@@ -651,10 +652,13 @@ final class PurchaseOrderControllerTest extends WebTestCase
             static fn (PurchaseOrderLogEntry $entry): bool => $entry->getAction() === PurchaseOrderLogEntry::ACTION_ADDED,
         ));
 
+        // PHPUnit runs under the CLI SAPI, so EventLogger records the CLI user instead of the logged-in web user.
+        $expectedUser = (new ConsoleInfoHelper())->getCLIUser() ?? 'Unknown';
+
         self::assertCount(1, $created);
-        self::assertSame('admin', $created[0]->getUsername());
+        self::assertSame($expectedUser, $created[0]->getUsername());
         self::assertCount(1, $added);
-        self::assertSame('admin', $added[0]->getUsername());
+        self::assertSame($expectedUser, $added[0]->getUsername());
         self::assertSame($partName, $added[0]->getLabel());
     }
 
