@@ -49,14 +49,9 @@ jobs:
         run: bash .github/assets/ci-database.sh start postgres "partdb-postgres-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${{ matrix.php-versions }}"
 
       - name: Setup PHP
-        uses: shivammathur/setup-php@v2
+        uses: ./.github/actions/setup-php-container
         with:
           php-version: ${{ matrix.php-versions }}
-          coverage: pcov
-          ini-values: xdebug.max_nesting_level=1000
-          extensions: mbstring, intl, gd, xsl, gmp, bcmath, :php-psr
-        env:
-          runner: self-hosted
 
         #- name: Setup MySQL
       #  uses: mirromutth/mysql-action@v1.1

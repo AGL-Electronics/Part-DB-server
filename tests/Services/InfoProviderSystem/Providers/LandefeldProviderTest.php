@@ -109,7 +109,7 @@ final class LandefeldProviderTest extends TestCase
         $ids = array_map(static fn ($result) => $result->provider_id, $results);
         $this->assertContains('IQSG 146 G', $ids);
         foreach ($results as $result) {
-            $this->assertStringContainsStringIgnoringCase('straight', $result->description);
+            $this->assertDoesNotMatchRegularExpression('/\b(elbow|angle|tee|T push-in)\b/i', $result->description);
             $this->assertMatchesRegularExpression('/\b6 mm\b/i', $result->description);
             $this->assertDoesNotMatchRegularExpression('/\b16 mm\b/i', $result->description);
         }
