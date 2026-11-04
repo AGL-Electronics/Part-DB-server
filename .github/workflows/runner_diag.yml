@@ -1,0 +1,41 @@
+name: Runner diagnostics
+
+on:
+  push:
+    branches:
+      - ci/self-hosted-php-containers
+
+permissions:
+  contents: read
+
+jobs:
+  host:
+    runs-on: [self-hosted, linux, x64, aglelectronics]
+    steps:
+      - name: Environment
+        run: |
+          set -x
+          cat /etc/os-release || true
+          id
+          command -v sudo && sudo -n true && echo "sudo ok" || echo "no passwordless sudo"
+          command -v apt-get || true
+          command -v php || true
+          echo "workspace=$GITHUB_WORKSPACE"
+          echo "runner_temp=$RUNNER_TEMP"
+          docker version || true
+          docker info --format '{{.Name}} {{.OperatingSystem}}' || true
+          self="$(cat /etc/hostname)"
+          docker inspect "$self" --format '{{json .Mounts}}' || true
+          mount | grep -E '/tmp/runner|_work' || true
+
+  container:
+    runs-on: [self-hosted, linux, x64, aglelectronics]
+    container:
+      image: php:8.3-cli
+    steps:
+      - uses: actions/checkout@v7
+      - name: Inside job container
+        run: |
+          php -v
+          ls -la "$GITHUB_WORKSPACE" | head -n 20
+          test -f composer.json && echo "workspace mounted"
