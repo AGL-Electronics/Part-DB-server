@@ -128,6 +128,30 @@ final class OrderCheckIn
         return $receipt;
     }
 
+    /**
+     * Marks every outstanding line without a database part as fully received, without touching stock.
+     */
+    public function receiveExternal(PurchaseOrder $order, string $comment): ?PurchaseOrderReceipt
+    {
+        $lines = $order->getOutstandingExternalLines();
+        if ($lines === []) {
+            return null;
+        }
+
+        $receipt = new PurchaseOrderReceipt();
+        $receipt->setComment($comment);
+        $order->addReceipt($receipt);
+        $this->entityManager->persist($receipt);
+        foreach ($lines as $line) {
+            $quantity = $line->getOutstanding();
+            $line->addQuantityReceived($quantity);
+            $receipt->addLine($line, null, $quantity);
+        }
+        $this->entityManager->flush();
+
+        return $receipt;
+    }
+
     private function prepareLot(OrderCheckInLine $row, Part $part): PartLot
     {
         $lot = $row->lot;

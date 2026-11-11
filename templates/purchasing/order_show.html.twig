@@ -37,6 +37,20 @@
                     {% trans %}purchase_order.check_in.action{% endtrans %}
                 </a>
             {% endif %}
+            {% if order.outstandingExternalLines is not empty %}
+                <form method="post" action="{{ path('purchase_order_receive_external', {id: order.id}) }}"
+                      {{ stimulus_controller('elements/delete_btn') }}
+                      {{ stimulus_action('elements/delete_btn', 'submit', 'submit') }}
+                      data-delete-title="{{ 'purchase_order.receive_external.confirm_title'|trans|e('html_attr') }}"
+                      data-delete-message="{{ 'purchase_order.receive_external.confirm_message'|trans({'%count%': order.outstandingExternalLines|length})|e('html_attr') }}">
+                    <input type="hidden" name="_token"
+                           value="{{ csrf_token('purchase_order_receive_external_' ~ order.id) }}">
+                    <button type="submit" class="btn btn-outline-success">
+                        <i class="fas fa-check-double me-1"></i>
+                        {% trans %}purchase_order.receive_external.action{% endtrans %}
+                    </button>
+                </form>
+            {% endif %}
         {% endif %}
 
         {% if order.kind == 'elec' %}

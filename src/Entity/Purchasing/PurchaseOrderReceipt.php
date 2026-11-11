@@ -78,7 +78,7 @@ class PurchaseOrderReceipt
         return $this->lines;
     }
 
-    public function addLine(PurchaseOrderLine $orderLine, PartLot $lot, int $quantity): PurchaseOrderReceiptLine
+    public function addLine(PurchaseOrderLine $orderLine, ?PartLot $lot, int $quantity): PurchaseOrderReceiptLine
     {
         $line = new PurchaseOrderReceiptLine();
         $line->setReceipt($this);

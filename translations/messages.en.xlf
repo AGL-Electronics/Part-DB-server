@@ -16838,6 +16838,42 @@ Buerklin-API Authentication server:
         <target>Ordered today</target>
       </segment>
     </unit>
+    <unit id="purchase_order.receive_external.action" name="purchase_order.receive_external.action">
+      <segment state="translated">
+        <source>purchase_order.receive_external.action</source>
+        <target>Mark non-database items as received</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.receive_external.confirm_title" name="purchase_order.receive_external.confirm_title">
+      <segment state="translated">
+        <source>purchase_order.receive_external.confirm_title</source>
+        <target>Mark non-database items as received?</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.receive_external.confirm_message" name="purchase_order.receive_external.confirm_message">
+      <segment state="translated">
+        <source>purchase_order.receive_external.confirm_message</source>
+        <target>%count% line(s) that are not in the database will be marked as fully received. No stock is booked for them. This cannot be undone.</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.receive_external.comment" name="purchase_order.receive_external.comment">
+      <segment state="translated">
+        <source>purchase_order.receive_external.comment</source>
+        <target>Non-database items received for order %name%</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.receive_external.done" name="purchase_order.receive_external.done">
+      <segment state="translated">
+        <source>purchase_order.receive_external.done</source>
+        <target>Non-database items were marked as received.</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.receive_external.none" name="purchase_order.receive_external.none">
+      <segment state="translated">
+        <source>purchase_order.receive_external.none</source>
+        <target>There are no open non-database items on this order.</target>
+      </segment>
+    </unit>
     <unit id="purchase_order.supplier" name="purchase_order.supplier">
       <segment state="translated">
         <source>purchase_order.supplier</source>
