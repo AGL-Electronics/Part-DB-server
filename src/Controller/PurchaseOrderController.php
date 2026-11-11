@@ -12,6 +12,7 @@ use App\Entity\PriceInformations\Orderdetail;
 use App\Entity\Purchasing\PurchaseOrder;
 use App\Entity\Purchasing\PurchaseOrderLine;
 use App\Repository\StructuralDBElementRepository;
+use App\Services\Purchasing\OpenOrderLines;
 use App\Services\Purchasing\OrderCheckIn;
 use App\Services\Purchasing\PurchaseOrderActivity;
 use App\Services\Purchasing\OrderCheckInException;
@@ -39,6 +40,7 @@ final class PurchaseOrderController extends AbstractController
         private readonly PurchaseOrderList $orderList,
         private readonly PurchaseOrderActivity $orderActivity,
         private readonly TranslatorInterface $translator,
+        private readonly OpenOrderLines $openOrderLines,
     ) {
     }
 
@@ -133,6 +135,36 @@ final class PurchaseOrderController extends AbstractController
             'partIds' => implode(',', array_map(static fn (Part $part): string => (string) $part->getID(), $parts)),
             'orders' => $this->orders(),
         ]);
+    }
+
+    #[Route('/part/{partId}/open-lines', name: 'purchase_order_part_open_lines', requirements: ['partId' => '\d+'], methods: ['GET'])]
+    public function partOpenLines(Request $request, int $partId): Response
+    {
+        $this->denyAccessUnlessGranted('@parts.read');
+        $part = $this->visiblePart($partId);
+        if (!$part instanceof Part) {
+            throw $this->createNotFoundException();
+        }
+        $except = $this->entityManager->find(PurchaseOrder::class, $this->intValue($request->query->get('except')));
+
+        $lines = [];
+        foreach ($this->openOrderLines->forPart($part, $except) as $line) {
+            $order = $line->getPurchaseOrder();
+            if (!$order instanceof PurchaseOrder) {
+                continue;
+            }
+            $lines[] = [
+                'order' => $this->orderLabel($order),
+                'outstanding' => $line->getOutstanding(),
+                'url' => $this->generateUrl('purchase_order_show', [
+                    'id' => $order->getId(),
+                    'highlight' => $line->getId(),
+                    '_fragment' => 'order-line-'.$line->getId(),
+                ]),
+            ];
+        }
+
+        return $this->json(['lines' => $lines]);
     }
 
     #[Route('/{id}', name: 'purchase_order_show', requirements: ['id' => '\d+'], methods: ['GET', 'POST'])]
@@ -469,8 +501,35 @@ final class PurchaseOrderController extends AbstractController
 
             return null;
         }
+        $this->warnAboutOtherOrders($part, $order);
 
         return $line;
+    }
+
+    private function warnAboutOtherOrders(Part $part, PurchaseOrder $order): void
+    {
+        $others = [];
+        foreach ($this->openOrderLines->forPart($part, $order) as $line) {
+            $other = $line->getPurchaseOrder();
+            if ($other instanceof PurchaseOrder) {
+                $others[] = $this->translator->trans('purchase_order.on_other_orders.item', [
+                    '%order%' => $this->orderLabel($other),
+                    '%quantity%' => $line->getOutstanding(),
+                ]);
+            }
+        }
+        if ($others === []) {
+            return;
+        }
+        $this->addFlash('warning', $this->translator->trans('purchase_order.on_other_orders.flash', [
+            '%part%' => $part->getName(),
+            '%orders%' => implode(', ', $others),
+        ]));
+    }
+
+    private function orderLabel(PurchaseOrder $order): string
+    {
+        return $order->getNumber() !== '' ? $order->getNumber().' - '.$order->getName() : $order->getName();
     }
 
     private function orderFromRequest(Request $request): PurchaseOrder

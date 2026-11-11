@@ -32,6 +32,8 @@ use App\Entity\Parts\PartLot;
 use App\Entity\Parts\StorageLocation;
 use App\Entity\Parts\Supplier;
 use App\Entity\ProjectSystem\Project;
+use App\Entity\Purchasing\PurchaseOrder;
+use App\Entity\Purchasing\PurchaseOrderLine;
 use App\Entity\ProjectSystem\ProjectBOMEntry;
 use App\Entity\UserSystem\User;
 use App\Services\InfoProviderSystem\DTOs\BulkSearchResponseDTO;
@@ -379,6 +381,74 @@ final class PartControllerTest extends WebTestCase
         $entityManager->remove($entityManager->getRepository(Project::class)->find($projectBId));
         $entityManager->remove($entityManager->getRepository(Project::class)->find($projectCId));
         $entityManager->flush();
+    }
+
+    public function testNewPartCanBeAddedToANewOrder(): void
+    {
+        $client = static::createClient();
+        $this->loginAsUser($client, 'admin');
+        $name = 'New-into-order-'.bin2hex(random_bytes(3));
+        $orderName = 'Order-for-'.$name;
+
+        $crawler = $client->request('GET', '/en/part/new?category=1');
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $this->assertSelectorExists('#part-add-to-order[data-controller~="pages--part-add-to-order"] select[name="add_to_order"]');
+        $this->assertSelectorNotExists('#part-add-to-order script');
+
+        $form = $crawler->filter('button[name="part_base[save]"]')->form();
+        $form['part_base[name]'] = $name;
+        $form['add_to_order']->select('new');
+        $form['add_to_order_name'] = $orderName;
+        $form['add_to_order_kind']->select('mech');
+        $form['add_to_order_quantity'] = '7';
+        $client->submit($form);
+        $this->assertResponseRedirects();
+
+        $entityManager = $client->getContainer()->get('doctrine')->getManager();
+        $part = $entityManager->getRepository(Part::class)->findOneBy(['name' => $name]);
+        self::assertInstanceOf(Part::class, $part);
+        $order = $entityManager->getRepository(PurchaseOrder::class)->findOneBy(['name' => $orderName]);
+        self::assertInstanceOf(PurchaseOrder::class, $order);
+        self::assertSame(PurchaseOrder::KIND_MECH, $order->getKind());
+        $line = $order->findLineForPart($part);
+        self::assertInstanceOf(PurchaseOrderLine::class, $line);
+        self::assertSame(7, $line->getQuantity());
+    }
+
+    public function testNewPartCanBeAddedToAnExistingOrderWithAnAutomaticQuantity(): void
+    {
+        $client = static::createClient();
+        $this->loginAsUser($client, 'admin');
+        $entityManager = $client->getContainer()->get('doctrine')->getManager();
+        $order = new PurchaseOrder();
+        $order->setName('Existing-'.bin2hex(random_bytes(3)));
+        $entityManager->persist($order);
+        $entityManager->flush();
+        $orderId = $order->getId();
+        $name = 'Into-existing-'.bin2hex(random_bytes(3));
+
+        $crawler = $client->request('GET', '/en/part/new?category=1');
+        $form = $crawler->filter('button[name="part_base[save]"]')->form();
+        $form['part_base[name]'] = $name;
+        $form['add_to_order']->select((string) $orderId);
+        $client->submit($form);
+        $this->assertResponseRedirects();
+
+        $entityManager = $client->getContainer()->get('doctrine')->getManager();
+        $part = $entityManager->getRepository(Part::class)->findOneBy(['name' => $name]);
+        self::assertInstanceOf(Part::class, $part);
+        $order = $entityManager->find(PurchaseOrder::class, $orderId);
+        self::assertInstanceOf(PurchaseOrder::class, $order);
+        self::assertSame(1, $order->findLineForPart($part)?->getQuantity());
+    }
+
+    public function testEditPageDoesNotOfferAddingToAnOrder(): void
+    {
+        $client = static::createClient();
+        $this->loginAsUser($client, 'admin');
+        $client->request('GET', '/en/part/1/edit');
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $this->assertSelectorNotExists('#part-add-to-order');
     }
 
     public function testMergePartsUsedInSameProjectSubmitsWithoutError(): void

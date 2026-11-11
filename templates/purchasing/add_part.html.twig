@@ -9,10 +9,27 @@
 {% block card_content %}
     <p class="text-muted">{% trans %}purchase_order.add.hint{% endtrans %}</p>
 
+    {% set already_ordered = parts|filter(part => part_open_order_lines(part) is not empty) %}
+    {% if already_ordered is not empty %}
+        <div class="alert alert-warning" role="alert" data-already-on-order-warning>
+            <i class="fas fa-triangle-exclamation fa-fw"></i>
+            {% trans with {'%count%': already_ordered|length} %}purchase_order.on_other_orders.summary{% endtrans %}
+        </div>
+    {% endif %}
+
     <p class="mb-1">{% trans %}purchase_order.add.parts{% endtrans %}</p>
     <ul>
         {% for part in parts %}
-            <li><a href="{{ path('part_edit', {id: part.id}) }}">{{ part.name }}</a></li>
+            <li>
+                <a href="{{ path('part_edit', {id: part.id}) }}">{{ part.name }}</a>
+                {% for order_line in part_open_order_lines(part) %}
+                    <a class="badge bg-warning text-dark rounded-pill text-decoration-none" data-part-open-order
+                       href="{{ path('purchase_order_show', {id: order_line.purchaseOrder.id, highlight: order_line.id, _fragment: 'order-line-' ~ order_line.id}) }}"
+                       title="{{ order_line.purchaseOrder.name }}" target="_blank" rel="noopener">
+                        <i class="fas fa-cart-shopping"></i>&nbsp;{% trans with {'%order%': order_line.purchaseOrder.number ?: order_line.purchaseOrder.name, '%quantity%': order_line.outstanding} %}part.info.on_order{% endtrans %}
+                    </a>
+                {% endfor %}
+            </li>
         {% endfor %}
     </ul>
 

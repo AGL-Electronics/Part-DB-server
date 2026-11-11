@@ -139,6 +139,10 @@
         </div>
     </div>
 
+    {% if purchaseOrders is defined and purchaseOrders is not null %}
+        {% include "parts/edit/_add_to_order.html.twig" %}
+    {% endif %}
+
     <div class="form-group row">
         <div class="{{ col_input }} {{ offset_label }}">
             <div class="btn-group">

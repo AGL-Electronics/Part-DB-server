@@ -16910,6 +16910,60 @@ Buerklin-API Authentication server:
         <target>Ordered today</target>
       </segment>
     </unit>
+    <unit id="part.new.add_to_order.title" name="part.new.add_to_order.title">
+      <segment state="translated">
+        <source>part.new.add_to_order.title</source>
+        <target>Add to an order (optional)</target>
+      </segment>
+    </unit>
+    <unit id="part.new.add_to_order.order" name="part.new.add_to_order.order">
+      <segment state="translated">
+        <source>part.new.add_to_order.order</source>
+        <target>Order</target>
+      </segment>
+    </unit>
+    <unit id="part.new.add_to_order.none" name="part.new.add_to_order.none">
+      <segment state="translated">
+        <source>part.new.add_to_order.none</source>
+        <target>Don't add to an order</target>
+      </segment>
+    </unit>
+    <unit id="part.new.add_to_order.new" name="part.new.add_to_order.new">
+      <segment state="translated">
+        <source>part.new.add_to_order.new</source>
+        <target>New order…</target>
+      </segment>
+    </unit>
+    <unit id="part.new.add_to_order.kind" name="part.new.add_to_order.kind">
+      <segment state="translated">
+        <source>part.new.add_to_order.kind</source>
+        <target>Order type</target>
+      </segment>
+    </unit>
+    <unit id="part.new.add_to_order.quantity_auto" name="part.new.add_to_order.quantity_auto">
+      <segment state="translated">
+        <source>part.new.add_to_order.quantity_auto</source>
+        <target>Automatic</target>
+      </segment>
+    </unit>
+    <unit id="part.new.add_to_order.help" name="part.new.add_to_order.help">
+      <segment state="translated">
+        <source>part.new.add_to_order.help</source>
+        <target>After saving, the new part is added to the chosen order. Leave the quantity empty to order enough to reach the minimum stock plus 10% (at least 1).</target>
+      </segment>
+    </unit>
+    <unit id="part.new.add_to_order.done" name="part.new.add_to_order.done">
+      <segment state="translated">
+        <source>part.new.add_to_order.done</source>
+        <target>The part was added to order %order%.</target>
+      </segment>
+    </unit>
+    <unit id="part.new.add_to_order.failed" name="part.new.add_to_order.failed">
+      <segment state="translated">
+        <source>part.new.add_to_order.failed</source>
+        <target>The part was saved, but could not be added to the order. Enter a name for a new order or choose an open one.</target>
+      </segment>
+    </unit>
     <unit id="purchase_order.search.label" name="purchase_order.search.label">
       <segment state="translated">
         <source>purchase_order.search.label</source>
@@ -16920,6 +16974,42 @@ Buerklin-API Authentication server:
       <segment state="translated">
         <source>purchase_order.search.placeholder</source>
         <target>Search by name, IPN, supplier or part number, position…</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.on_other_orders.title" name="purchase_order.on_other_orders.title">
+      <segment state="translated">
+        <source>purchase_order.on_other_orders.title</source>
+        <target>This part is already on another open order. Make sure you are not ordering it twice:</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.on_other_orders.item" name="purchase_order.on_other_orders.item">
+      <segment state="translated">
+        <source>purchase_order.on_other_orders.item</source>
+        <target>%order% (%quantity% still to arrive)</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.on_other_orders.flash" name="purchase_order.on_other_orders.flash">
+      <segment state="translated">
+        <source>purchase_order.on_other_orders.flash</source>
+        <target>%part% is also on other open orders: %orders%. Remove it again if this is a duplicate.</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.on_other_orders.summary" name="purchase_order.on_other_orders.summary">
+      <segment state="translated">
+        <source>purchase_order.on_other_orders.summary</source>
+        <target>%count% of these parts are already on an open order (marked below). Make sure you are not ordering them twice.</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.search.action" name="purchase_order.search.action">
+      <segment state="translated">
+        <source>purchase_order.search.action</source>
+        <target>Search</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.search.clear" name="purchase_order.search.clear">
+      <segment state="translated">
+        <source>purchase_order.search.clear</source>
+        <target>Clear search</target>
       </segment>
     </unit>
     <unit id="purchase_order.search.count" name="purchase_order.search.count">

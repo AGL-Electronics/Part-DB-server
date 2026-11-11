@@ -668,7 +668,9 @@ final class PurchaseOrderControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('tr#order-line-'.$lineId.'.table-info'));
         self::assertCount(1, $crawler->filter('tr.table-info'));
-        self::assertCount(1, $crawler->filter('input[data-order-search]'));
+        self::assertCount(1, $crawler->filter('[data-controller~="pages--purchase-order-show"] form[data-order-search-form] input[data-order-search]'));
+        self::assertCount(1, $crawler->filter('form[data-order-search-form] button[type="submit"]'));
+        self::assertCount(0, $crawler->filter('script:not([nonce]):not([src]):not([type="application/json"])'));
 
         $em = $this->em($client);
         $received = $em->find(PurchaseOrderLine::class, $lineId);
@@ -677,6 +679,59 @@ final class PurchaseOrderControllerTest extends WebTestCase
         $em->flush();
         $crawler = $client->request('GET', '/en/part/'.$created['part']->getID());
         self::assertCount(0, $crawler->filter('a[data-part-open-order]'));
+    }
+
+    public function testAddingAPartThatIsAlreadyOnAnotherOrderWarns(): void
+    {
+        $client = $this->client();
+        $em = $this->em($client);
+        $created = $this->partWithSingleLot($client, 0.0);
+        $partId = (int) $created['part']->getID();
+        $existing = new PurchaseOrder();
+        $existing->setName('Existing-'.bin2hex(random_bytes(3)));
+        $line = new PurchaseOrderLine();
+        $line->setPart($created['part']);
+        $line->setQuantity(5);
+        $line->addQuantityReceived(2);
+        $existing->addLine($line);
+        $em->persist($existing);
+        $em->flush();
+        $existingId = (int) $existing->getId();
+
+        $crawler = $client->request('GET', '/en/orders/add?parts='.$partId);
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('[data-already-on-order-warning]'));
+        self::assertCount(1, $crawler->filter('a[data-part-open-order][href*="/orders/'.$existingId.'?highlight="]'));
+
+        $client->request('GET', '/en/orders/part/'.$partId.'/open-lines');
+        self::assertResponseIsSuccessful();
+        $lines = json_decode((string) $client->getResponse()->getContent(), true)['lines'];
+        self::assertCount(1, $lines);
+        self::assertSame(3, $lines[0]['outstanding']);
+        self::assertStringContainsString($existing->getName(), $lines[0]['order']);
+        $client->request('GET', '/en/orders/part/'.$partId.'/open-lines?except='.$existingId);
+        self::assertSame([], json_decode((string) $client->getResponse()->getContent(), true)['lines']);
+
+        $crawler = $client->request('GET', '/en/orders');
+        $client->request('POST', '/en/orders', [
+            '_token' => $this->formToken($crawler, '#/orders$#'),
+            'name' => 'Second-'.bin2hex(random_bytes(3)),
+        ]);
+        $orderId = $this->orderIdFromRedirect($client);
+        $crawler = $client->followRedirect();
+        $warningForm = $crawler->filter('form[data-controller~="pages--order-duplicate-warning"]');
+        self::assertCount(1, $warningForm);
+        self::assertStringContainsString('except='.$orderId, (string) $warningForm->attr('data-open-lines-url'));
+
+        $client->request('POST', '/en/orders/'.$orderId.'/lines', [
+            '_token' => $this->formToken($crawler, '#/orders/'.$orderId.'/lines$#'),
+            'add_part' => (string) $partId,
+        ]);
+        self::assertResponseRedirects();
+        $client->followRedirect();
+        $content = (string) $client->getResponse()->getContent();
+        self::assertStringContainsString('is also on other open orders', $content);
+        self::assertStringContainsString('3 still to arrive', $content);
     }
 
     public function testAddPageWithoutAPartReturnsToTheList(): void
