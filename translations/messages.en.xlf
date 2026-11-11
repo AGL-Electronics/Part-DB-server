@@ -16976,6 +16976,30 @@ Buerklin-API Authentication server:
         <target>Search by name, IPN, supplier or part number, position…</target>
       </segment>
     </unit>
+    <unit id="purchase_order.on_other_orders.title" name="purchase_order.on_other_orders.title">
+      <segment state="translated">
+        <source>purchase_order.on_other_orders.title</source>
+        <target>This part is already on another open order. Make sure you are not ordering it twice:</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.on_other_orders.item" name="purchase_order.on_other_orders.item">
+      <segment state="translated">
+        <source>purchase_order.on_other_orders.item</source>
+        <target>%order% (%quantity% still to arrive)</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.on_other_orders.flash" name="purchase_order.on_other_orders.flash">
+      <segment state="translated">
+        <source>purchase_order.on_other_orders.flash</source>
+        <target>%part% is also on other open orders: %orders%. Remove it again if this is a duplicate.</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.on_other_orders.summary" name="purchase_order.on_other_orders.summary">
+      <segment state="translated">
+        <source>purchase_order.on_other_orders.summary</source>
+        <target>%count% of these parts are already on an open order (marked below). Make sure you are not ordering them twice.</target>
+      </segment>
+    </unit>
     <unit id="purchase_order.search.action" name="purchase_order.search.action">
       <segment state="translated">
         <source>purchase_order.search.action</source>

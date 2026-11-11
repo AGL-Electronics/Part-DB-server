@@ -275,7 +275,9 @@
                     <div class="card-body">
                         <h2 class="h5 card-title">{% trans %}purchase_order.add.database_part{% endtrans %}</h2>
                         <form class="row g-2 align-items-end" method="post"
-                              action="{{ path('purchase_order_add_database_part', {id: order.id}) }}">
+                              action="{{ path('purchase_order_add_database_part', {id: order.id}) }}"
+                              {{ stimulus_controller('pages/order_duplicate_warning') }}
+                              data-open-lines-url="{{ path('purchase_order_part_open_lines', {partId: 0, except: order.id}) }}">
                             <input type="hidden" name="_token"
                                    value="{{ csrf_token('purchase_order_add_part_' ~ order.id) }}">
                             <div class="col">
@@ -292,6 +294,14 @@
                                     <i class="fas fa-plus fa-fw"></i>
                                     {% trans %}purchase_order.add.action{% endtrans %}
                                 </button>
+                            </div>
+                            <div class="col-12 d-none" data-duplicate-warning
+                                 data-item-template="{{ 'purchase_order.on_other_orders.item'|trans({'%order%': '__ORDER__', '%quantity%': '__QUANTITY__'})|e('html_attr') }}">
+                                <div class="alert alert-warning mb-0 py-2" role="alert">
+                                    <i class="fas fa-triangle-exclamation fa-fw"></i>
+                                    {% trans %}purchase_order.on_other_orders.title{% endtrans %}
+                                    <ul class="mb-0" data-duplicate-warning-list></ul>
+                                </div>
                             </div>
                         </form>
                     </div>
