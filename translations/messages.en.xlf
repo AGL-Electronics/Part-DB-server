@@ -8697,6 +8697,12 @@ Element 1 -&gt; Element 1.2</target>
         <target>In stock less than desired (total amount &lt; min. amount)</target>
       </segment>
     </unit>
+    <unit id="part.filter.onOrder" name="part.filter.onOrder">
+      <segment state="translated">
+        <source>part.filter.onOrder</source>
+        <target>On order (has an order line that is not fully received)</target>
+      </segment>
+    </unit>
     <unit id="YN9eLcZ" name="part.filter.lotOwner">
       <segment state="translated">
         <source>part.filter.lotOwner</source>

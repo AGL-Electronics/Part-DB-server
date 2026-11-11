@@ -33,6 +33,7 @@ use App\DataTables\Filters\Constraints\Part\BulkImportJobExistsConstraint;
 use App\DataTables\Filters\Constraints\Part\BulkImportJobStatusConstraint;
 use App\DataTables\Filters\Constraints\Part\BulkImportPartStatusConstraint;
 use App\DataTables\Filters\Constraints\Part\LessThanDesiredConstraint;
+use App\DataTables\Filters\Constraints\Part\OnOrderConstraint;
 use App\DataTables\Filters\Constraints\Part\ParameterConstraint;
 use App\DataTables\Filters\Constraints\Part\TagsConstraint;
 use App\DataTables\Filters\Constraints\TextConstraint;
@@ -80,6 +81,7 @@ class PartFilter implements FilterInterface
     public readonly IntConstraint $lotCount;
     public readonly NumberConstraint $amountSum;
     public readonly LessThanDesiredConstraint $lessThanDesired;
+    public readonly OnOrderConstraint $onOrder;
 
     public readonly BooleanConstraint $lotNeedsRefill;
     public readonly TextConstraint $lotDescription;
@@ -149,6 +151,7 @@ class PartFilter implements FilterInterface
                 )', identifier: "amountSumWhere"));
         $this->lotCount = new IntConstraint('COUNT(_partLots)');
         $this->lessThanDesired = new LessThanDesiredConstraint();
+        $this->onOrder = new OnOrderConstraint();
 
         $this->storelocation = new EntityConstraint($nodesListBuilder, StorageLocation::class, '_partLots.storage_location');
         $this->lotNeedsRefill = new BooleanConstraint('_partLots.needs_refill');

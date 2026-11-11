@@ -102,6 +102,9 @@ final class DatatablesAvailabilityTest extends WebTestCase
         yield ['/parts?part_filter%5BamountSum%5D%5Boperator%5D=>&part_filter%5BamountSum%5D%5Bvalue1%5D=1&part_filter%5Bsubmit%5D='];
         //Less than desired filter:
         yield ['/parts?part_filter%5BlessThanDesired%5D%5Bvalue%5D=true&part_filter%5Bsubmit%5D='];
+        //On order filter:
+        yield ['/parts?part_filter%5BonOrder%5D%5Bvalue%5D=true&part_filter%5Bsubmit%5D='];
+        yield ['/parts?part_filter%5BonOrder%5D%5Bvalue%5D=false&part_filter%5Bsubmit%5D='];
 
         //Test regex search
         yield ['/parts/search?category=1&comment=1&description=1&ipn=1&keyword=test&mpn=1&name=1&ordernr=1&regex=1&storelocation=1&tags=1'];
