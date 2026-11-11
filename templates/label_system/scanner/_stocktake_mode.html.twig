@@ -1,0 +1,48 @@
+{% set stocktake_lots = scannedLot|default(null) ? [scannedLot] : part.partLots %}
+
+<div class="card border-primary mb-3" id="scan-stocktake">
+    <h5 class="card-header text-bg-primary">
+        <i class="fas fa-clipboard-check fa-fw"></i> {% trans %}label_scanner.stocktake.title{% endtrans %}: {{ part.name }}
+    </h5>
+    <div class="card-body">
+        {% for lot in stocktake_lots %}
+            <form method="post" action="{{ path('part_stocktake', {id: part.id}) }}"
+                  class="row g-2 align-items-end {% if not loop.last %}mb-3 pb-3 border-bottom{% endif %}">
+                <input type="hidden" name="_token" value="{{ csrf_token('part_stocktake-' ~ part.iD) }}">
+                <input type="hidden" name="lot_id" value="{{ lot.iD }}">
+                <input type="hidden" name="_redirect" value="{{ path('scan_dialog', {stocktake: 1}) }}">
+                <input type="hidden" name="comment" value="{{ 'label_scanner.stocktake.comment'|trans }}">
+                <div class="col-12">
+                    <strong>{{ lot.storageLocation ? lot.storageLocation.name : '—' }}</strong>
+                    {% if lot.name is not empty %}<span class="text-muted">· {{ lot.name }}</span>{% endif %}
+                    <div class="small text-muted">
+                        {% trans %}label_scanner.stocktake.current{% endtrans %}:
+                        {% if lot.instockUnknown %}?{% else %}{{ lot.amount|format_amount(part.partUnit, {'decimals': 5}) }}{% endif %}
+                    </div>
+                </div>
+                {% if is_granted('stocktake', lot) %}
+                    <div class="col">
+                        <label class="visually-hidden" for="scan-stocktake-amount-{{ lot.iD }}">
+                            {% trans %}label_scanner.stocktake.actual_amount{% endtrans %}
+                        </label>
+                        <input class="form-control form-control-lg" id="scan-stocktake-amount-{{ lot.iD }}"
+                               type="number" name="actual_amount" required min="0"
+                               step="{{ (part.partUnit and not part.partUnit.integer) ? 'any' : '1' }}"
+                               inputmode="{{ (part.partUnit and not part.partUnit.integer) ? 'decimal' : 'numeric' }}"
+                               placeholder="{{ 'label_scanner.stocktake.actual_amount'|trans }}"
+                               {% if loop.first %}{{ stimulus_controller('elements/autofocus') }}{% endif %}>
+                    </div>
+                    <div class="col-auto">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-check fa-fw"></i> {% trans %}label_scanner.stocktake.submit{% endtrans %}
+                        </button>
+                    </div>
+                {% else %}
+                    <div class="col-12 text-danger small">{% trans %}label_scanner.stocktake.denied{% endtrans %}</div>
+                {% endif %}
+            </form>
+        {% else %}
+            <div class="text-muted">{% trans %}label_scanner.no_locations{% endtrans %}</div>
+        {% endfor %}
+    </div>
+</div>

@@ -41,6 +41,7 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use App\Entity\Parts\PartLot;
 use App\Exceptions\InfoProviderNotActiveException;
 use App\Form\LabelSystem\ScanDialogType;
 use App\Services\LabelSystem\BarcodeScanner\BarcodeScanResultHandler;
@@ -69,12 +70,16 @@ class ScanController extends AbstractController
     ) {}
 
     #[Route(path: '', name: 'scan_dialog')]
-    public function dialog(Request $request, #[MapQueryParameter] ?string $input = null): Response
+    public function dialog(Request $request, #[MapQueryParameter] ?string $input = null, #[MapQueryParameter] bool $stocktake = false): Response
     {
         $this->denyAccessUnlessGranted('@tools.label_scanner');
 
         $form = $this->createForm(ScanDialogType::class);
+        if ($stocktake) {
+            $form->get('stocktake_mode')->setData(true);
+        }
         $form->handleRequest($request);
+        $stocktakeMode = $form->isSubmitted() ? (bool) $form['stocktake_mode']->getData() : $stocktake;
 
         // If JS is working, scanning uses /scan/lookup and this action just renders the page.
         // This fallback only runs if user submits the form manually or uses ?input=...
@@ -85,7 +90,7 @@ class ScanController extends AbstractController
 
         if ($input !== null && $input !== '') {
             $mode = $form->isSubmitted() ? $form['mode']->getData() : null;
-            $infoMode = $form->isSubmitted() && $form['info_mode']->getData();
+            $infoMode = $stocktakeMode || ($form->isSubmitted() && $form['info_mode']->getData());
 
             try {
                 $scan = $this->barcodeNormalizer->scanBarcodeContent($input, $mode ?? null);
@@ -130,6 +135,8 @@ class ScanController extends AbstractController
                             'part' => $resolvedPart,
                             'openUrl' => $openUrl,
                             'createUrl' => $createUrl,
+                            'stocktakeMode' => $stocktakeMode,
+                            'scannedLot' => $dbEntity instanceof PartLot ? $dbEntity : null,
                         ]);
                     }
 
@@ -156,6 +163,8 @@ class ScanController extends AbstractController
             'part' => $resolvedPart ?? null,
             'openUrl' => $openUrl ?? null,
             'createUrl' => $createUrl ?? null,
+            'stocktakeMode' => $stocktakeMode,
+            'scannedLot' => isset($dbEntity) && $dbEntity instanceof PartLot ? $dbEntity : null,
         ]);
     }
 

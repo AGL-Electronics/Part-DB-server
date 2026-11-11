@@ -3,6 +3,10 @@
 {% if decoded is not empty %}
     <hr>
 
+    {% if stocktakeMode|default(false) and part %}
+        {% include "label_system/scanner/_stocktake_mode.html.twig" %}
+    {% endif %}
+
     {% if part %} {# Show detailed info when it is a part #}
         <div class="card border-success">
             <h5 class="card-header text-bg-success">

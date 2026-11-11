@@ -9785,6 +9785,72 @@ Please note, that you can not impersonate a disabled user. If you try you will g
         <target>Info mode (Decode barcode and show its contents, but do not redirect to part)</target>
       </segment>
     </unit>
+    <unit id="scan_dialog.stocktake_mode" name="scan_dialog.stocktake_mode">
+      <segment state="translated">
+        <source>scan_dialog.stocktake_mode</source>
+        <target>Stock count mode</target>
+      </segment>
+    </unit>
+    <unit id="scan_dialog.stocktake_mode.help" name="scan_dialog.stocktake_mode.help">
+      <segment state="translated">
+        <source>scan_dialog.stocktake_mode.help</source>
+        <target>After scanning a part or lot label, enter how many are left to set the stock to that amount.</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.start" name="label_scanner.stocktake.start">
+      <segment state="translated">
+        <source>label_scanner.stocktake.start</source>
+        <target>Start stock count</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.active" name="label_scanner.stocktake.active">
+      <segment state="translated">
+        <source>label_scanner.stocktake.active</source>
+        <target>Stock count mode</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.stop" name="label_scanner.stocktake.stop">
+      <segment state="translated">
+        <source>label_scanner.stocktake.stop</source>
+        <target>Stop stock count</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.title" name="label_scanner.stocktake.title">
+      <segment state="translated">
+        <source>label_scanner.stocktake.title</source>
+        <target>Set stock</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.current" name="label_scanner.stocktake.current">
+      <segment state="translated">
+        <source>label_scanner.stocktake.current</source>
+        <target>Currently in stock</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.actual_amount" name="label_scanner.stocktake.actual_amount">
+      <segment state="translated">
+        <source>label_scanner.stocktake.actual_amount</source>
+        <target>Amount left</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.submit" name="label_scanner.stocktake.submit">
+      <segment state="translated">
+        <source>label_scanner.stocktake.submit</source>
+        <target>Set</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.denied" name="label_scanner.stocktake.denied">
+      <segment state="translated">
+        <source>label_scanner.stocktake.denied</source>
+        <target>You are not allowed to change the stock of this lot.</target>
+      </segment>
+    </unit>
+    <unit id="label_scanner.stocktake.comment" name="label_scanner.stocktake.comment">
+      <segment state="translated">
+        <source>label_scanner.stocktake.comment</source>
+        <target>Stock count via scanner</target>
+      </segment>
+    </unit>
     <unit id="k5Gvkgp" name="label_scanner.decoded_info.title">
       <segment state="translated">
         <source>label_scanner.decoded_info.title</source>

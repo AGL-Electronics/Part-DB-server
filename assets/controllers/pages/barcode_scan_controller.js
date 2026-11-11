@@ -34,13 +34,12 @@ export default class extends Controller {
         // Prevent double init if connect fires twice
         if (this._scanner) return;
 
-        // clear last decoded barcode when state changes on info box
-        const info = document.getElementById("scan_dialog_info_mode");
-        if (info) {
-            this._onInfoChange = () => {
-                this._lastDecodedText = "";
-            };
-            info.addEventListener("change", this._onInfoChange);
+        // clear last decoded barcode when state changes on info box or stocktake mode
+        this._onInfoChange = () => {
+            this._lastDecodedText = "";
+        };
+        for (const id of ["scan_dialog_info_mode", "scan_dialog_stocktake_mode"]) {
+            document.getElementById(id)?.addEventListener("change", this._onInfoChange);
         }
 
         const isMobile = window.matchMedia("(max-width: 768px)").matches;
@@ -83,9 +82,10 @@ export default class extends Controller {
         this._lastDecodedText = "";
 
         // Unbind info-mode change handler (always do this, even if scanner is null)
-        const info = document.getElementById("scan_dialog_info_mode");
-        if (info && this._onInfoChange) {
-            info.removeEventListener("change", this._onInfoChange);
+        if (this._onInfoChange) {
+            for (const id of ["scan_dialog_info_mode", "scan_dialog_stocktake_mode"]) {
+                document.getElementById(id)?.removeEventListener("change", this._onInfoChange);
+            }
         }
         this._onInfoChange = null;
 
