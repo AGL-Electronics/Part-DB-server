@@ -670,7 +670,10 @@ final class PurchaseOrderControllerTest extends WebTestCase
         self::assertCount(1, $crawler->filter('tr.table-info'));
         self::assertCount(1, $crawler->filter('input[data-order-search]'));
 
-        $line->addQuantityReceived(4);
+        $em = $this->em($client);
+        $received = $em->find(PurchaseOrderLine::class, $lineId);
+        self::assertInstanceOf(PurchaseOrderLine::class, $received);
+        $received->addQuantityReceived(4);
         $em->flush();
         $crawler = $client->request('GET', '/en/part/'.$created['part']->getID());
         self::assertCount(0, $crawler->filter('a[data-part-open-order]'));
