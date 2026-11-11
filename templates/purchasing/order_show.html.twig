@@ -103,19 +103,28 @@
     </div>
 
     {% set highlight_line = app.request.query.get('highlight') %}
+    <div {{ stimulus_controller('pages/purchase_order_show') }}>
     {% if lines|length > 1 %}
-        <div class="row g-2 align-items-center mb-2">
-            <div class="col-sm-8 col-lg-6">
+        <form class="row g-2 align-items-center mb-2" role="search" data-order-search-form>
+            <div class="col-sm-9 col-lg-7">
                 <label class="visually-hidden" for="purchase-order-search">{% trans %}purchase_order.search.label{% endtrans %}</label>
                 <div class="input-group">
                     <span class="input-group-text"><i class="fas fa-search fa-fw"></i></span>
                     <input class="form-control" id="purchase-order-search" type="search" autocomplete="off"
                            placeholder="{{ 'purchase_order.search.placeholder'|trans }}" data-order-search>
+                    <button class="btn btn-primary" type="submit">
+                        <i class="fas fa-search fa-fw"></i> {% trans %}purchase_order.search.action{% endtrans %}
+                    </button>
+                    <button class="btn btn-outline-secondary" type="button" data-order-search-clear
+                            title="{{ 'purchase_order.search.clear'|trans }}">
+                        <i class="fas fa-times fa-fw"></i>
+                        <span class="visually-hidden">{% trans %}purchase_order.search.clear{% endtrans %}</span>
+                    </button>
                 </div>
             </div>
             <div class="col-auto small text-muted d-none" data-order-search-count
                  data-template="{{ 'purchase_order.search.count'|trans({'%count%': '__COUNT__', '%total%': lines|length})|e('html_attr') }}"></div>
-        </div>
+        </form>
     {% endif %}
 
     <div class="table-responsive">
@@ -257,6 +266,7 @@
             </tbody>
         </table>
     </div>
+    </div>
 
     {% if can_edit %}
         <div class="row g-3 mb-3">
@@ -381,40 +391,4 @@
         </div>
     {% endif %}
 
-    <script>
-        document.querySelectorAll('[data-order-target]').forEach((input) => {
-            input.addEventListener('input', () => {
-                const qty = input.closest('tr').querySelector('[data-order-qty]');
-                if (!qty || qty.dataset.touched === '1') {
-                    return;
-                }
-                const missing = Number(input.value) - Number(input.dataset.stock);
-                qty.value = String(Math.max(0, Math.ceil(missing)));
-            });
-        });
-        document.querySelectorAll('[data-order-qty]').forEach((input) => {
-            input.addEventListener('input', () => {
-                input.dataset.touched = '1';
-            });
-        });
-        document.querySelectorAll('[data-order-search]').forEach((search) => {
-            const rows = Array.from(document.querySelectorAll('[data-order-line]'));
-            const count = document.querySelector('[data-order-search-count]');
-            search.addEventListener('input', () => {
-                const terms = search.value.toLowerCase().split(/\s+/).filter((term) => term !== '');
-                let visible = 0;
-                rows.forEach((row) => {
-                    const text = row.dataset.searchText + ' ' + row.querySelector('[data-order-position]').textContent.trim();
-                    const match = terms.every((term) => text.includes(term));
-                    row.classList.toggle('d-none', !match);
-                    visible += match ? 1 : 0;
-                });
-                if (count) {
-                    count.textContent = count.dataset.template.replace('__COUNT__', String(visible));
-                    count.classList.toggle('d-none', terms.length === 0);
-                }
-            });
-        });
-        document.querySelector('[data-order-highlight]')?.scrollIntoView({block: 'center'});
-    </script>
 {% endblock %}

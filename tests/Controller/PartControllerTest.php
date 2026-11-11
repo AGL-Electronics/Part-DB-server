@@ -392,7 +392,8 @@ final class PartControllerTest extends WebTestCase
 
         $crawler = $client->request('GET', '/en/part/new?category=1');
         $this->assertResponseStatusCodeSame(Response::HTTP_OK);
-        $this->assertSelectorExists('#part-add-to-order select[name="add_to_order"]');
+        $this->assertSelectorExists('#part-add-to-order[data-controller~="pages--part-add-to-order"] select[name="add_to_order"]');
+        $this->assertSelectorNotExists('#part-add-to-order script');
 
         $form = $crawler->filter('button[name="part_base[save]"]')->form();
         $form['part_base[name]'] = $name;

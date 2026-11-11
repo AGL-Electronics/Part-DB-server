@@ -1,4 +1,4 @@
-<div class="card mb-3" id="part-add-to-order">
+<div class="card mb-3" id="part-add-to-order" {{ stimulus_controller('pages/part_add_to_order') }}>
     <div class="card-body">
         <h2 class="h6 card-title">
             <i class="fas fa-cart-shopping fa-fw"></i> {% trans %}part.new.add_to_order.title{% endtrans %}
@@ -37,24 +37,3 @@
         <div class="form-text">{% trans %}part.new.add_to_order.help{% endtrans %}</div>
     </div>
 </div>
-
-<script>
-    (() => {
-        const target = document.querySelector('[data-add-to-order-target]');
-        if (!target) {
-            return;
-        }
-        const update = () => {
-            const creating = target.value === 'new';
-            document.querySelectorAll('[data-add-to-order-new]').forEach((element) => {
-                element.classList.toggle('d-none', !creating);
-                element.querySelectorAll('input').forEach((input) => { input.required = creating; });
-            });
-            document.querySelectorAll('[data-add-to-order-details]').forEach((element) => {
-                element.classList.toggle('d-none', target.value === '');
-            });
-        };
-        target.addEventListener('change', update);
-        update();
-    })();
-</script>

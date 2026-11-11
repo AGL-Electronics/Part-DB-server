@@ -668,7 +668,9 @@ final class PurchaseOrderControllerTest extends WebTestCase
         self::assertResponseIsSuccessful();
         self::assertCount(1, $crawler->filter('tr#order-line-'.$lineId.'.table-info'));
         self::assertCount(1, $crawler->filter('tr.table-info'));
-        self::assertCount(1, $crawler->filter('input[data-order-search]'));
+        self::assertCount(1, $crawler->filter('[data-controller~="pages--purchase-order-show"] form[data-order-search-form] input[data-order-search]'));
+        self::assertCount(1, $crawler->filter('form[data-order-search-form] button[type="submit"]'));
+        self::assertCount(0, $crawler->filter('script:not([nonce]):not([src]):not([type="application/json"])'));
 
         $em = $this->em($client);
         $received = $em->find(PurchaseOrderLine::class, $lineId);

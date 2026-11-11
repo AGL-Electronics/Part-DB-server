@@ -16976,6 +16976,18 @@ Buerklin-API Authentication server:
         <target>Search by name, IPN, supplier or part number, position…</target>
       </segment>
     </unit>
+    <unit id="purchase_order.search.action" name="purchase_order.search.action">
+      <segment state="translated">
+        <source>purchase_order.search.action</source>
+        <target>Search</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.search.clear" name="purchase_order.search.clear">
+      <segment state="translated">
+        <source>purchase_order.search.clear</source>
+        <target>Clear search</target>
+      </segment>
+    </unit>
     <unit id="purchase_order.search.count" name="purchase_order.search.count">
       <segment state="translated">
         <source>purchase_order.search.count</source>
