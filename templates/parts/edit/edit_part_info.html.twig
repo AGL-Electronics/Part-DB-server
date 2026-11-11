@@ -139,7 +139,7 @@
         </div>
     </div>
 
-    {% if purchaseOrders|default(null) is not null %}
+    {% if purchaseOrders is defined and purchaseOrders is not null %}
         {% include "parts/edit/_add_to_order.html.twig" %}
     {% endif %}
 
