@@ -46,6 +46,28 @@ final class ScanControllerTest extends WebTestCase
         $this->assertResponseRedirects('/en/part/1');
     }
 
+    public function testStocktakeModeCanBeStartedFromTheQueryString(): void
+    {
+        $crawler = $this->client->request('GET', '/en/scan?stocktake=1');
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(1, $crawler->filter('input#scan_dialog_stocktake_mode[checked]'));
+        $this->assertCount(1, $crawler->filter('a.btn-outline-secondary[href="/en/scan"]'));
+    }
+
+    public function testStocktakeModeShowsTheCountFormInsteadOfRedirecting(): void
+    {
+        $crawler = $this->client->request('GET', '/en/scan');
+        $form = $crawler->filter('#scan_dialog_form')->form([
+            'scan_dialog[input]' => '0000001',
+            'scan_dialog[stocktake_mode]' => true,
+        ]);
+        $crawler = $this->client->submit($form);
+
+        $this->assertResponseIsSuccessful();
+        $this->assertCount(1, $crawler->filter('#scan-stocktake'));
+        $this->assertCount(1, $crawler->filter('input#scan_dialog_stocktake_mode[checked]'));
+    }
+
     public function testScanQRCode(): void
     {
         $this->client->request('GET', '/scan/part/1');

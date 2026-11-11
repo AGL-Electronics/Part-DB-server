@@ -338,6 +338,22 @@ final class PurchaseOrderController extends AbstractController
         ]);
     }
 
+    #[Route('/{id}/receive-external', name: 'purchase_order_receive_external', requirements: ['id' => '\d+'], methods: ['POST'])]
+    public function receiveExternal(Request $request, PurchaseOrder $order): Response
+    {
+        $this->denyAccessUnlessGranted('@parts.edit');
+        $this->assertCsrf($request, 'purchase_order_receive_external_'.$order->getId());
+
+        $comment = $this->translator->trans('purchase_order.receive_external.comment', ['%name%' => $order->getName()]);
+        $receipt = $this->orderCheckIn->receiveExternal($order, mb_substr($comment, 0, 255));
+        $this->addFlash(
+            $receipt === null ? 'warning' : 'success',
+            $receipt === null ? 'purchase_order.receive_external.none' : 'purchase_order.receive_external.done'
+        );
+
+        return $this->redirectToRoute('purchase_order_show', ['id' => $order->getId()]);
+    }
+
     #[Route('/{id}/delete', name: 'purchase_order_delete', requirements: ['id' => '\d+'], methods: ['POST'])]
     public function delete(Request $request, PurchaseOrder $order): Response
     {

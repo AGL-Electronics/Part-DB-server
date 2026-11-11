@@ -591,6 +591,94 @@ final class PurchaseOrderControllerTest extends WebTestCase
         self::assertSame(0, $reloaded->findLineForPart($part)?->getQuantityReceived());
     }
 
+    public function testNonDatabaseLinesCanBeMarkedReceivedToCloseTheOrder(): void
+    {
+        $client = $this->client();
+        $em = $this->em($client);
+        $created = $this->partWithSingleLot($client, 3.0);
+        $order = new PurchaseOrder();
+        $order->setName('External-close-'.bin2hex(random_bytes(3)));
+        $partLine = new PurchaseOrderLine();
+        $partLine->setPart($created['part']);
+        $partLine->setQuantity(2);
+        $partLine->addQuantityReceived(2);
+        $order->addLine($partLine);
+        $external = new PurchaseOrderLine();
+        $external->setExternalName('USB-C adapter');
+        $external->setQuantity(4);
+        $order->addLine($external);
+        $em->persist($order);
+        $em->flush();
+        $orderId = (int) $order->getId();
+        self::assertSame('partial', $order->getFulfillment());
+
+        $crawler = $client->request('GET', '/en/orders/'.$orderId);
+        $form = $crawler->filter('form[action$="/orders/'.$orderId.'/receive-external"]');
+        self::assertCount(1, $form);
+        self::assertNotSame('', $form->attr('data-delete-message'));
+
+        $client->request('POST', '/en/orders/'.$orderId.'/receive-external', [
+            '_token' => $this->formToken($crawler, '#/receive-external$#'),
+        ]);
+        self::assertResponseRedirects();
+        $crawler = $client->followRedirect();
+        self::assertStringContainsString('Non-database items were marked as received.', (string) $client->getResponse()->getContent());
+        self::assertCount(0, $crawler->filter('form[action$="/receive-external"]'));
+
+        $em->clear();
+        $order = $em->find(PurchaseOrder::class, $orderId);
+        self::assertInstanceOf(PurchaseOrder::class, $order);
+        self::assertSame('received', $order->getFulfillment());
+        self::assertCount(1, $order->getReceipts());
+        self::assertSame(3.0, $this->lotAmount($em, (int) $created['lot']->getID()));
+        foreach ($order->getLines() as $line) {
+            self::assertSame(0, $line->getOutstanding());
+        }
+    }
+
+    public function testPartPageLinksToOpenOrdersAndTheOrderHighlightsThatLine(): void
+    {
+        $client = $this->client();
+        $em = $this->em($client);
+        $created = $this->partWithSingleLot($client, 0.0);
+        $order = new PurchaseOrder();
+        $order->setName('On-order-'.bin2hex(random_bytes(3)));
+        $line = new PurchaseOrderLine();
+        $line->setPart($created['part']);
+        $line->setQuantity(6);
+        $line->addQuantityReceived(2);
+        $order->addLine($line);
+        $other = new PurchaseOrderLine();
+        $other->setExternalName('Something else');
+        $other->setQuantity(1);
+        $order->addLine($other);
+        $em->persist($order);
+        $em->flush();
+        $orderId = (int) $order->getId();
+        $lineId = (int) $line->getId();
+
+        $crawler = $client->request('GET', '/en/part/'.$created['part']->getID());
+        self::assertResponseIsSuccessful();
+        $badge = $crawler->filter('a[data-part-open-order]');
+        self::assertCount(1, $badge);
+        self::assertStringContainsString('/orders/'.$orderId.'?highlight='.$lineId.'#order-line-'.$lineId, (string) $badge->attr('href'));
+        self::assertStringContainsString('4 open', $badge->text());
+
+        $crawler = $client->request('GET', '/en/orders/'.$orderId.'?highlight='.$lineId);
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('tr#order-line-'.$lineId.'.table-info'));
+        self::assertCount(1, $crawler->filter('tr.table-info'));
+        self::assertCount(1, $crawler->filter('input[data-order-search]'));
+
+        $em = $this->em($client);
+        $received = $em->find(PurchaseOrderLine::class, $lineId);
+        self::assertInstanceOf(PurchaseOrderLine::class, $received);
+        $received->addQuantityReceived(4);
+        $em->flush();
+        $crawler = $client->request('GET', '/en/part/'.$created['part']->getID());
+        self::assertCount(0, $crawler->filter('a[data-part-open-order]'));
+    }
+
     public function testAddPageWithoutAPartReturnsToTheList(): void
     {
         $client = $this->client();

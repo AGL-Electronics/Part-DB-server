@@ -82,6 +82,13 @@
         {% if part.notEnoughInstock %}
             <span class="badge badge-warning bg-warning rounded-pill"><i class="fa-solid fa-less-than-equal"></i>&nbsp;{% trans %}part.info.amount.less_than_desired{% endtrans %}</span>
         {% endif %}
+        {% for order_line in part_open_order_lines(part) %}
+            <a class="badge bg-info text-dark rounded-pill text-decoration-none"
+               href="{{ path('purchase_order_show', {id: order_line.purchaseOrder.id, highlight: order_line.id, _fragment: 'order-line-' ~ order_line.id}) }}"
+               title="{{ order_line.purchaseOrder.name }}" data-part-open-order>
+                <i class="fas fa-cart-shopping"></i>&nbsp;{% trans with {'%order%': order_line.purchaseOrder.number ?: order_line.purchaseOrder.name, '%quantity%': order_line.outstanding} %}part.info.on_order{% endtrans %}
+            </a>
+        {% endfor %}
         </dd>
     </div>
 

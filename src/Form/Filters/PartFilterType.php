@@ -235,6 +235,10 @@ class PartFilterType extends AbstractType
             'label' => 'part.filter.lessThanDesired'
         ]);
 
+        $builder->add('onOrder', BooleanConstraintType::class, [
+            'label' => 'part.filter.onOrder'
+        ]);
+
         $builder->add('lotNeedsRefill', BooleanConstraintType::class, [
             'label' => 'part.filter.lotNeedsRefill'
         ]);

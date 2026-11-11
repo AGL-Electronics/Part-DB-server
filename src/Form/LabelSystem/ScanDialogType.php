@@ -83,6 +83,12 @@ class ScanDialogType extends AbstractType
             'required' => false,
         ]);
 
+        $builder->add('stocktake_mode', CheckboxType::class, [
+            'label' => 'scan_dialog.stocktake_mode',
+            'help' => 'scan_dialog.stocktake_mode.help',
+            'required' => false,
+        ]);
+
         $builder->add('submit', SubmitType::class, [
             'label' => 'scan_dialog.submit',
         ]);

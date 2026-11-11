@@ -3,6 +3,21 @@
 {% block card_title %}<i class="fas fa-camera-retro fa-fw"></i> {% trans %}label_scanner.title{% endtrans %}{% endblock %}
 
 {% block card_content %}
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        {% if stocktakeMode|default(false) %}
+            <span class="badge text-bg-primary fs-6">
+                <i class="fas fa-clipboard-check fa-fw"></i> {% trans %}label_scanner.stocktake.active{% endtrans %}
+            </span>
+            <a class="btn btn-outline-secondary btn-sm" href="{{ path('scan_dialog') }}">
+                {% trans %}label_scanner.stocktake.stop{% endtrans %}
+            </a>
+        {% else %}
+            <a class="btn btn-outline-primary" href="{{ path('scan_dialog', {stocktake: 1}) }}">
+                <i class="fas fa-clipboard-check fa-fw"></i> {% trans %}label_scanner.stocktake.start{% endtrans %}
+            </a>
+        {% endif %}
+    </div>
+
     <div class="alert alert-warning d-none" id="scanner-warning">
         <strong>{% trans %}label_scanner.no_cam_found.title{% endtrans %}</strong>: {% trans %}label_scanner.no_cam_found.text{% endtrans %}
     </div>

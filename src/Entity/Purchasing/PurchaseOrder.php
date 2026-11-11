@@ -153,6 +153,23 @@ class PurchaseOrder
         $line->setPurchaseOrder($this);
     }
 
+    /**
+     * Lines without a database part that still wait for items. They cannot be checked in to stock.
+     *
+     * @return list<PurchaseOrderLine>
+     */
+    public function getOutstandingExternalLines(): array
+    {
+        $lines = [];
+        foreach ($this->lines as $line) {
+            if (!$line->isInDatabase() && $line->getOutstanding() > 0) {
+                $lines[] = $line;
+            }
+        }
+
+        return $lines;
+    }
+
     public function findLineForPart(Part $part): ?PurchaseOrderLine
     {
         foreach ($this->lines as $line) {
