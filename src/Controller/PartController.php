@@ -37,6 +37,7 @@ use App\Entity\ProjectSystem\Project;
 use App\Exceptions\AttachmentDownloadException;
 use App\Form\Part\PartBaseType;
 use App\Form\Part\PartLotType;
+use App\Entity\Purchasing\PurchaseOrder;
 use App\Services\Attachments\AttachmentSubmitHandler;
 use App\Services\Attachments\GeneratedImageAttachmentHelper;
 use App\Services\Attachments\PartPreviewGenerator;
@@ -52,6 +53,7 @@ use App\Services\Parameters\ParameterExtractor;
 use App\Services\Parts\PartLotWithdrawAddHelper;
 use App\Services\Parts\PricedetailHelper;
 use App\Services\ProjectSystem\ProjectBuildPartHelper;
+use App\Services\Purchasing\NewPartOrderHelper;
 use App\Settings\BehaviorSettings\PartInfoSettings;
 use App\Settings\MiscSettings\IpnSuggestSettings;
 use DateTime;
@@ -88,6 +90,7 @@ final class PartController extends AbstractController
         private readonly EventCommentHelper $commentHelper,
         private readonly PartInfoSettings $partInfoSettings,
         private readonly IpnSuggestSettings $ipnSuggestSettings,
+        private readonly NewPartOrderHelper $newPartOrderHelper,
     ) {
     }
 
@@ -641,6 +644,7 @@ final class PartController extends AbstractController
             $this->em->flush();
             if ($mode === 'new') {
                 $this->addFlash('success', 'part.created_flash');
+                $this->addNewPartToOrder($request, $new_part);
             } elseif ($mode === 'edit') {
                 $this->addFlash('success', 'part.edited_flash');
             }
@@ -695,9 +699,38 @@ final class PartController extends AbstractController
                 'merge_old_name' => $merge_infos['tname_before'] ?? null,
                 'merge_other' => $merge_infos['other_part'] ?? null,
                 'bulk_job' => $merge_infos['bulk_job'] ?? null,
-                'jobId' => $request->query->get('jobId')
+                'jobId' => $request->query->get('jobId'),
+                'purchaseOrders' => $mode === 'new' && $this->isGranted('@parts.edit')
+                    ? $this->newPartOrderHelper->selectableOrders() : null,
             ]
         );
+    }
+
+    private function addNewPartToOrder(Request $request, Part $part): void
+    {
+        $target = $request->request->get('add_to_order');
+        if (!is_string($target) || $target === '' || !$this->isGranted('@parts.edit')) {
+            return;
+        }
+        $name = $request->request->get('add_to_order_name');
+        $kind = $request->request->get('add_to_order_kind');
+        $quantity = $request->request->get('add_to_order_quantity');
+
+        $order = $this->newPartOrderHelper->addToOrder(
+            $part,
+            $target,
+            is_string($name) ? $name : '',
+            is_string($kind) ? $kind : PurchaseOrder::KIND_ELEC,
+            is_string($quantity) && ctype_digit(trim($quantity)) ? (int) trim($quantity) : null,
+        );
+        if (!$order instanceof PurchaseOrder) {
+            $this->addFlash('warning', 'part.new.add_to_order.failed');
+
+            return;
+        }
+        $this->addFlash('success', $this->translator->trans('part.new.add_to_order.done', [
+            '%order%' => $order->getNumber() !== '' ? $order->getNumber() : $order->getName(),
+        ]));
     }
 
     #[Route(path: '/{id}/stocktake', name: 'part_stocktake', methods: ['POST'])]

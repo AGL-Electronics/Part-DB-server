@@ -1,0 +1,60 @@
+<div class="card mb-3" id="part-add-to-order">
+    <div class="card-body">
+        <h2 class="h6 card-title">
+            <i class="fas fa-cart-shopping fa-fw"></i> {% trans %}part.new.add_to_order.title{% endtrans %}
+        </h2>
+        <div class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label" for="part-add-to-order-target">{% trans %}part.new.add_to_order.order{% endtrans %}</label>
+                <select class="form-select" id="part-add-to-order-target" name="add_to_order" data-add-to-order-target>
+                    <option value="">{% trans %}part.new.add_to_order.none{% endtrans %}</option>
+                    <option value="new">{% trans %}part.new.add_to_order.new{% endtrans %}</option>
+                    {% for order in purchaseOrders %}
+                        <option value="{{ order.id }}">
+                            {{ order.number ?: order.name }}{% if order.number %} – {{ order.name }}{% endif %}
+                            {% if not order.orderedAt %}({% trans %}purchase_order.not_ordered{% endtrans %}){% endif %}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-none" data-add-to-order-new>
+                <label class="form-label" for="part-add-to-order-name">{% trans %}purchase_order.name{% endtrans %}</label>
+                <input class="form-control" id="part-add-to-order-name" type="text" name="add_to_order_name" maxlength="255">
+            </div>
+            <div class="col-md-3 d-none" data-add-to-order-new>
+                <label class="form-label" for="part-add-to-order-kind">{% trans %}part.new.add_to_order.kind{% endtrans %}</label>
+                <select class="form-select" id="part-add-to-order-kind" name="add_to_order_kind">
+                    <option value="elec">{% trans %}purchase_order.kind.elec{% endtrans %}</option>
+                    <option value="mech">{% trans %}purchase_order.kind.mech{% endtrans %}</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-none" data-add-to-order-details>
+                <label class="form-label" for="part-add-to-order-quantity">{% trans %}purchase_order.quantity{% endtrans %}</label>
+                <input class="form-control" id="part-add-to-order-quantity" type="number" min="1" step="1"
+                       name="add_to_order_quantity" placeholder="{{ 'part.new.add_to_order.quantity_auto'|trans }}">
+            </div>
+        </div>
+        <div class="form-text">{% trans %}part.new.add_to_order.help{% endtrans %}</div>
+    </div>
+</div>
+
+<script>
+    (() => {
+        const target = document.querySelector('[data-add-to-order-target]');
+        if (!target) {
+            return;
+        }
+        const update = () => {
+            const creating = target.value === 'new';
+            document.querySelectorAll('[data-add-to-order-new]').forEach((element) => {
+                element.classList.toggle('d-none', !creating);
+                element.querySelectorAll('input').forEach((input) => { input.required = creating; });
+            });
+            document.querySelectorAll('[data-add-to-order-details]').forEach((element) => {
+                element.classList.toggle('d-none', target.value === '');
+            });
+        };
+        target.addEventListener('change', update);
+        update();
+    })();
+</script>
