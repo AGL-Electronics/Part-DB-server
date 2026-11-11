@@ -102,6 +102,22 @@
         </div>
     </div>
 
+    {% set highlight_line = app.request.query.get('highlight') %}
+    {% if lines|length > 1 %}
+        <div class="row g-2 align-items-center mb-2">
+            <div class="col-sm-8 col-lg-6">
+                <label class="visually-hidden" for="purchase-order-search">{% trans %}purchase_order.search.label{% endtrans %}</label>
+                <div class="input-group">
+                    <span class="input-group-text"><i class="fas fa-search fa-fw"></i></span>
+                    <input class="form-control" id="purchase-order-search" type="search" autocomplete="off"
+                           placeholder="{{ 'purchase_order.search.placeholder'|trans }}" data-order-search>
+                </div>
+            </div>
+            <div class="col-auto small text-muted d-none" data-order-search-count
+                 data-template="{{ 'purchase_order.search.count'|trans({'%count%': '__COUNT__', '%total%': lines|length})|e('html_attr') }}"></div>
+        </div>
+    {% endif %}
+
     <div class="table-responsive">
         <table class="table table-sm align-middle">
             <thead>
@@ -129,7 +145,9 @@
             <tbody>
             {% for row in lines %}
                 {% set line = row.line %}
-                <tr>
+                <tr id="order-line-{{ line.id }}" data-order-line
+                    data-search-text="{{ [line.label, line.supplierPartNumber, row.digikey, row.mouser, line.supplier ? line.supplier.name : '', line.part ? line.part.ipn : '']|join(' ')|lower }}"
+                    {% if highlight_line == line.id ~ '' %}class="table-info" data-order-highlight{% endif %}>
                     <th class="text-muted" scope="row" data-order-position>{{ loop.index }}</th>
                     <td>
                         {% if line.part %}
@@ -379,5 +397,24 @@
                 input.dataset.touched = '1';
             });
         });
+        document.querySelectorAll('[data-order-search]').forEach((search) => {
+            const rows = Array.from(document.querySelectorAll('[data-order-line]'));
+            const count = document.querySelector('[data-order-search-count]');
+            search.addEventListener('input', () => {
+                const terms = search.value.toLowerCase().split(/\s+/).filter((term) => term !== '');
+                let visible = 0;
+                rows.forEach((row) => {
+                    const text = row.dataset.searchText + ' ' + row.querySelector('[data-order-position]').textContent.trim();
+                    const match = terms.every((term) => text.includes(term));
+                    row.classList.toggle('d-none', !match);
+                    visible += match ? 1 : 0;
+                });
+                if (count) {
+                    count.textContent = count.dataset.template.replace('__COUNT__', String(visible));
+                    count.classList.toggle('d-none', terms.length === 0);
+                }
+            });
+        });
+        document.querySelector('[data-order-highlight]')?.scrollIntoView({block: 'center'});
     </script>
 {% endblock %}

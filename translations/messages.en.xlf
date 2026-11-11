@@ -16904,6 +16904,30 @@ Buerklin-API Authentication server:
         <target>Ordered today</target>
       </segment>
     </unit>
+    <unit id="purchase_order.search.label" name="purchase_order.search.label">
+      <segment state="translated">
+        <source>purchase_order.search.label</source>
+        <target>Search this order</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.search.placeholder" name="purchase_order.search.placeholder">
+      <segment state="translated">
+        <source>purchase_order.search.placeholder</source>
+        <target>Search by name, IPN, supplier or part number, position…</target>
+      </segment>
+    </unit>
+    <unit id="purchase_order.search.count" name="purchase_order.search.count">
+      <segment state="translated">
+        <source>purchase_order.search.count</source>
+        <target>%count% of %total% lines</target>
+      </segment>
+    </unit>
+    <unit id="part.info.on_order" name="part.info.on_order">
+      <segment state="translated">
+        <source>part.info.on_order</source>
+        <target>On order: %order% (%quantity% open)</target>
+      </segment>
+    </unit>
     <unit id="purchase_order.receive_external.action" name="purchase_order.receive_external.action">
       <segment state="translated">
         <source>purchase_order.receive_external.action</source>

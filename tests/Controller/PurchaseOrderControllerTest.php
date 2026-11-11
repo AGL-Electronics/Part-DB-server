@@ -636,6 +636,46 @@ final class PurchaseOrderControllerTest extends WebTestCase
         }
     }
 
+    public function testPartPageLinksToOpenOrdersAndTheOrderHighlightsThatLine(): void
+    {
+        $client = $this->client();
+        $em = $this->em($client);
+        $created = $this->partWithSingleLot($client, 0.0);
+        $order = new PurchaseOrder();
+        $order->setName('On-order-'.bin2hex(random_bytes(3)));
+        $line = new PurchaseOrderLine();
+        $line->setPart($created['part']);
+        $line->setQuantity(6);
+        $line->addQuantityReceived(2);
+        $order->addLine($line);
+        $other = new PurchaseOrderLine();
+        $other->setExternalName('Something else');
+        $other->setQuantity(1);
+        $order->addLine($other);
+        $em->persist($order);
+        $em->flush();
+        $orderId = (int) $order->getId();
+        $lineId = (int) $line->getId();
+
+        $crawler = $client->request('GET', '/en/part/'.$created['part']->getID());
+        self::assertResponseIsSuccessful();
+        $badge = $crawler->filter('a[data-part-open-order]');
+        self::assertCount(1, $badge);
+        self::assertStringContainsString('/orders/'.$orderId.'?highlight='.$lineId.'#order-line-'.$lineId, (string) $badge->attr('href'));
+        self::assertStringContainsString('4 open', $badge->text());
+
+        $crawler = $client->request('GET', '/en/orders/'.$orderId.'?highlight='.$lineId);
+        self::assertResponseIsSuccessful();
+        self::assertCount(1, $crawler->filter('tr#order-line-'.$lineId.'.table-info'));
+        self::assertCount(1, $crawler->filter('tr.table-info'));
+        self::assertCount(1, $crawler->filter('input[data-order-search]'));
+
+        $line->addQuantityReceived(4);
+        $em->flush();
+        $crawler = $client->request('GET', '/en/part/'.$created['part']->getID());
+        self::assertCount(0, $crawler->filter('a[data-part-open-order]'));
+    }
+
     public function testAddPageWithoutAPartReturnsToTheList(): void
     {
         $client = $this->client();
